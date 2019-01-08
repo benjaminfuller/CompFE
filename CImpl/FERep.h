@@ -8,7 +8,7 @@
 
 
 //void create_filters(iris * iris_data);
-uint8_t *  FEreproduce(iris * iris_data);
+uint8_t *  FEreproduce(iris * iris_data, int choice_num);
 
 
 #endif

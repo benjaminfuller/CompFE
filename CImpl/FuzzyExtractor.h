@@ -2,6 +2,15 @@
 #define IRISFE_FUZZYEXTRACTOR
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+
+#define LENGTH 32768
+
+int verbose(const char * restrict, ...);
+void setVerbose(bool);
+
+
+
 
 typedef struct{
     float highpos;
@@ -10,15 +19,13 @@ typedef struct{
     float lowneg;
 } Confidence;
 
-typedef struct{
-    int *vector;
-    int *conf;
+typedef struct iris_array_struct{
+    int vector[LENGTH];
+    int conf[LENGTH];
+    int conf_level[LENGTH];
     int length;
-    int enough;
-    //This variable is unused at least in this file
 } iris_array_input;
 
 int within_range(float, Confidence);
-iris_array_input readArray(char*, Confidence);
-
+iris_array_input * readArray(FILE*, Confidence);
 #endif /* !IRISFE_FUZZYEXTRACTOR */

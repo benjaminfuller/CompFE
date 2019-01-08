@@ -38,21 +38,51 @@ iris* alloc_iris(){
 	return (iris*)calloc(1, sizeof(iris_pack));
 }
 
-void free_iris(iris *targ){
+void free_iris(iris *targ, int flag){
 	//error checking, its a pain but important
 	for(unsigned int i = 0; i < targ->num_filters; i++){
-		free(targ->filters[i]);
-		free(targ->lockers[i]);
+		if(targ->lockers[i]){
+			free(targ->lockers[i]);
+		}
 	}
-	free(targ->eye_vec);
-	free(targ->conf_vec);
-	free(targ->filters);
-	free(targ->lockers);
-//	free(targ->hmac_key);
-	free(targ->priv_key);
-	free(targ->filter_populator);
-	free(targ->filter_preimage);
-	free(targ);
+
+	if(flag==0){
+		for(unsigned int i = 0; i < targ->num_filters; i++){
+			if(targ->filters[i]){
+				free(targ->filters[i]);
+			}
+		}
+		if(targ->filters)
+			free(targ->filters);
+	}
+	if(targ->locker_order){
+		free(targ->locker_order);
+	}
+	if (targ->eye_vec){
+		free(targ->eye_vec);
+	}
+	if(targ->conf_vec){
+		free(targ->conf_vec);
+	}
+	if(targ->lockers){
+		free(targ->lockers);
+	}
+	//free(targ->hmac_key);
+	if(targ->priv_key){
+		free(targ->priv_key);
+	}
+	if(targ->filter_populator){
+		free(targ->filter_populator);
+	}
+	if(targ->filter_preimage){
+		free(targ->filter_preimage);
+	}
+	if(targ->priority_level){
+		free(targ->priority_level);
+	}
+	if(targ){
+		free(targ);
+	}
 }
 
 packed_bits* alloc_packed_bits(){
@@ -133,38 +163,46 @@ packed_bits* pack_bits(int *src, size_t src_len) {
 
 }
 
-uint64_t count_conf_bits(int *vector, int length){
+uint64_t count_conf_bits(iris_array_input * src){
+	printf("This is the source pointer 0x%x\n",src);
+	printf("Source length %u\n",src->length);
 	uint64_t count = 0;
-	for(size_t i = 0; i<(size_t)length; i++){
-		if(vector[i])
+	if(src==NULL){exit(1);}
+	for(size_t i = 0; i<(size_t)src->length; i++){
+		if(src->conf[i]==1){
 			count++;
+		}
 	}
-	//printf("Num conf: %lld", count);
 	return count;
 }
 
-int* conf_condense(int *vec, int *conf, uint64_t conf_len){
-	int* condensed = (int*)calloc(conf_len,sizeof(int));
+int* conf_condense(int *vec, int *conf, uint64_t src_len, uint64_t conf_num){
+	int* condensed = (int*)calloc(src_len,sizeof(int));
 	int conf_found = 0;
 	int weight_conf =0 ;
-	for(int i = 0; i<conf_len; i++){
-		if(vec[conf[i]]==1){
-			condensed[conf_found] = 1;
-			weight_conf++;
-		}
-		conf_found+=1;
-	}
-	printf("Weight of confident bits %i\n", weight_conf);
+	for(int i = 0; i<src_len && conf_found< conf_num; i++){
+		//printf("%u %u %u\n",conf[i], vec[0], vec[1]);
+		if(conf[i]==1){
+			if(conf[i] ==1 && vec[i]==1){
+				condensed[conf_found] = 1;
+				weight_conf++;
+			}
+			conf_found+=1;
+
+
+		}}
+	///////	printf("Weight of confident bits %i %i\n", weight_conf, conf_found);
 	return condensed;
 }
 
 iris* make_iris(iris_array_input *src, uint64_t num_filters, uint64_t subsel_size){
-	uint64_t conf_len = count_conf_bits(src->conf, src->length);
-	printf("Number of conf bits %i\n", conf_len);
-	int *condensed = conf_condense(src->vector,src->conf,conf_len);
-	//    for(int i= 0; i< conf_len; i++){
-	//    		printf("Conf bits %i\n", condensed[i]);
-	//    }
+
+
+	uint64_t conf_len = count_conf_bits(src);
+
+	int *condensed = conf_condense(src->vector,src->conf,src->length, conf_len);
+
+
 	packed_bits *pack_vec = pack_bits(condensed, conf_len);
 	int *conf_copy = (int*)malloc(sizeof(int)*(src->length));
 	memcpy(conf_copy,src->conf, sizeof(int)*(src->length));
@@ -175,12 +213,36 @@ iris* make_iris(iris_array_input *src, uint64_t num_filters, uint64_t subsel_siz
 	eye->locs_len = conf_len;
 	eye->num_filters = num_filters;
 	eye->filter_preimage = (uint16_t*) calloc(subsel_size, sizeof(uint64_t));
+	eye->locker_order = (uint64_t * ) calloc(num_filters, sizeof(uint64_t));
+	eye->priority_level = (int *) calloc(num_filters, sizeof(int));
 	eye->sub_len = subsel_size;
+	//	for (int i=0;i<src->length;i++)printf("%x ",conf_copy[i]);
 	eye->conf_vec = conf_copy;
+	eye->conf_level_vec=src->conf_level;
 	eye->input_len = src->length;
-	eye->filters = (uint64_t**)calloc(num_filters, sizeof(uint64_t*));
+
+	eye->filters = (uint64_t**)calloc(num_filters,sizeof(uint64_t*));
 	eye->lockers = (uint8_t**)calloc(num_filters, sizeof(uint8_t*));
+	printf("The number of filters being allocated %u 0x%x\n",num_filters, eye->lockers);
 	free(condensed);
 	free(pack_vec);
+
+	//    for(int i= 0; i< conf_len; i++){
+	//    		printf("Conf bits %i\n", condensed[i]);
+	//    }
 	return eye;
+}
+
+
+void remake_iris(iris_array_input *src,iris_array_input* srcGen, iris * eye, uint64_t num_filters, uint64_t subsel_size){
+
+
+
+	uint64_t conf_len = count_conf_bits(srcGen);
+	int *condensed = conf_condense(src->vector,srcGen->conf,src->length, conf_len);
+	free(eye->eye_vec);	
+	packed_bits *pack_vec = pack_bits(condensed, conf_len);
+	eye->eye_vec = pack_vec->bits;
+	free(condensed);
+	free(pack_vec);
 }

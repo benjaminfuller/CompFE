@@ -15,10 +15,14 @@
 } iris_array_input;*/
 
 
+
 typedef struct {
+    uint64_t * locker_order; 
     uint64_t *eye_vec;
     int *conf_vec;
+    int *conf_level_vec;
     uint64_t **filters;
+    int * priority_level;
     uint64_t num_filters;
     uint64_t length;
     uint64_t input_len;
@@ -32,7 +36,10 @@ typedef struct {
 //    uint64_t hmac_key_len;
     unsigned char *priv_key;
     uint64_t priv_key_len;
+    struct subset_info;
 } iris_pack;
+
+
 
 typedef struct {
     char **lockers;
@@ -51,6 +58,11 @@ typedef struct {
 
 typedef iris_pack iris;
 
+
+    
+
+
+
 /*iris* alloc_iris();
 packed_bits* alloc_packed_bits();
 void free_packed_bits(packed_bits*);
@@ -60,6 +72,10 @@ void pack_64b_segment(char*, uint64_t*);
 packed_bits* pack_bits(int *src, size_t);
 uint64_t count_conf_bits(int*, int);
 int* conf_condense(int *vec, int *conf, uint64_t conf_len);*/
+
+
+void remake_iris(iris_array_input *src,iris_array_input* srcGen, iris * eye, uint64_t num_filters, uint64_t subsel_size);
 iris * make_iris(iris_array_input *src, uint64_t num_filters, uint64_t subsel_size);
 
+//void remake_iris(iris_array_input *src,iris_array_input* srcGen, iris * eye, uint64_t num_filters, uint64_t subsel_size);
 #endif /* IRISFE_FUZZYPACK */

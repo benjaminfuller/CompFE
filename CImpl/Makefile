@@ -1,18 +1,18 @@
 CC = cc
-CFLAGS = -g -w -std=c99 $(pkg-config --cflags libsodium)
-LDFLAGS=  $(pkg-config --libs libsodium)
+CFLAGS = -g -w -std=gnu99 $(pkg-config --cflags libsodium)
+LDFLAGS=  $(pkg-config --libs libsodium pthread)
 
 
 all: main FuzzyExtractor
 
 main:  FuzzyPack.o FuzzyExtractor.o FECommon.o FEGen.o FERep.o
-	$(CC)  $^ -o $@ $(LDFLAGS) -lsodium
+	$(CC)  $^ -o $@ $(LDFLAGS) -lsodium -lpthread -lm
 
 FuzzyPackTesting: FuzzyPack.o FuzzyExtractor.o FECommon.o FEGen.o FERep.o
-	$(CC)  $^ -o $@ $(LDFLAGS) -lsodium
+	$(CC)  $^ -o $@ $(LDFLAGS) -lsodium -lpthread -lm
 
 FuzzyExtractor: FuzzyPack.o FuzzyExtractor.o FEGen.o FECommon.o FERep.o
-	$(CC) -o FuzzyExtractor FuzzyExtractor.o FuzzyPack.o FEGen.o FERep.o FECommon.o  $(LDFLAGS) -lsodium
+	$(CC) -o FuzzyExtractor FuzzyExtractor.o FuzzyPack.o FEGen.o FERep.o FECommon.o  $(LDFLAGS) -lsodium -lpthread -lm
 #	$(CC) -o FuzzyExtractor FuzzyExtractor.o FuzzyPack.o FEGen.o FECommon.o /Users/bfuller/Research/Iris/nacl-20110221/build/taranenko/lib/x86/randombytes.o -lnacl $(CFLAGS)
 
 #FuzzyPack: FuzzyPack.o FuzzyExtractor.o
