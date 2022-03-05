@@ -8,8 +8,6 @@ import time
 from hashlib import sha512
 
 
-
-
 def RPIGen(w, hash=sha512):
     omega = []
     c = []
@@ -24,6 +22,7 @@ def RPIGen(w, hash=sha512):
         omega.append(xi)
     return c, omega
 
+
 def RPIRep(w, c, hash=sha512):
     length = hash().digest_size
     n = s = len(w)
@@ -34,7 +33,7 @@ def RPIRep(w, c, hash=sha512):
             h = bytearray(hmac.new(seed, w[i], hash).digest())
             xi = xor(cj, h)
             res = check_result(xi)
-            if(not res and j==(n-1)):
+            if(not res and j == (n-1)):
                 omega.append(generate_random(length/2))
             elif(not res and j != (n-1)):
                 continue
@@ -47,13 +46,15 @@ def RPIRep(w, c, hash=sha512):
 
 
 def xor(b1, b2):
-    return bytearray([x ^ y for x,y in zip(b1, b2)])
+    return bytearray([x ^ y for x, y in zip(b1, b2)])
+
 
 def generate_random(length):
     return bytearray([random.SystemRandom().randint(0, 255) for x in range(length)])
 
+
 def check_result(res):
-    return all(v ==0 for v in res[:len(res)/2])
+    return all(v == 0 for v in res[:len(res)/2])
 
 
 if __name__ == '__main__':
@@ -63,5 +64,3 @@ if __name__ == '__main__':
     omega2 = rep(r, c)
     print(omega)
     print(omega2)
-
-

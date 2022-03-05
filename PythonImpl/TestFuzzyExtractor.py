@@ -3,6 +3,7 @@ import cProfile
 import json
 import unittest
 
+
 class TestFuzzyExtractor(unittest.TestCase):
 
     def setUp(self):
@@ -34,9 +35,10 @@ class TestFuzzyExtractor(unittest.TestCase):
         res = self.fe.rep(f2, p)
         self.assertIsNone(res)
 
+
 if __name__ == '__main__':
     unittest.main()
     #suite = unittest.TestLoader().discover('.')
-    #def runtests():
+    # def runtests():
     #    unittest.TextTestRunner().run(suite)
-    #cProfile.run('runtests()',sort='cumtime')
+    # cProfile.run('runtests()',sort='cumtime')
