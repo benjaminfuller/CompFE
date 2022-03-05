@@ -14,29 +14,33 @@ class FuzzyExtractor:
     def __init__(self, hash=sha512):
         self.hash = hash
 
+    #TODO Haven't converted this to Python3.  Current implementation doesn't require
+    # confidence information so we'll leave it alone for now
     def gen_config(self, real, bits, config):
         with open(config, "r") as f:
             c = json.load(f)
         c['confidence']['reals'] = real
         return self.gen(bits, c['locker_size'], c['lockers'], c['confidence'])
 
-    def gen(self, bits, locker_size=43, lockers=1000000, confidence=None):
+    def gen(self, bits, locker_size=43, lockers=10000, confidence=None):
         length = self.hash().digest_size
-        r = self.generate_sample(size=length/2)
-        zeros = bytearray([0 for x in range(length/2)])
+        key_len = int(length/2)
+        pad_len = int(length - length/2)
+        r = self.generate_sample(size=key_len)
+        zeros = bytearray([0 for x in range(pad_len)])
         check = zeros + r
         seeds = self.generate_sample(length=lockers, size=16)
         if confidence is None:
-            pick_range = xrange(0, len(bits)-1)
+            pick_range = range(0, len(bits)-1)
         else:
             pick_range = self.confidence_range(
-                confidence, list(xrange(0, len(bits)-1)))
+                confidence, list(range(0, len(bits)-1)))
+
             print(len(pick_range))
             if(len(pick_range) < 1024):
                 return "Confidence range too small"
-        positions = np.array([random.SystemRandom().sample(
-            pick_range, locker_size) for x in range(lockers)])
-        print(positions)
+        randGen = random.SystemRandom()
+        positions = np.array([randGen.sample(pick_range, locker_size) for x in range(lockers)])
         p = []
         for x in range(lockers):
             v_i = np.array([bits[y] for y in positions[x]])
@@ -67,8 +71,10 @@ class FuzzyExtractor:
             p.start()
         for p in processes:
             p.join()
-        if(any(finished)):
+        if any(finished):
+            print("Rep succeeded")
             return next(item for item in finished if item is not None)
+        print("Rep failed")
         return None
 
     def rep_process(self, bits, p, finished, process_id):
@@ -77,30 +83,32 @@ class FuzzyExtractor:
             v_i = np.array([bits[x] for x in positions])
             h = bytearray(hmac.new(seed, v_i, self.hash).digest())
             res = self.xor(c_i, h)
-            if(self.check_result(res)):
-                finished[process_id] = res[len(res)/2:]
+            keyLen = int(len(res)/2)
+            if self.check_result(res):
+                finished[process_id] = res[keyLen:]
                 return
             counter += 1
-            if(counter == 1000):
+            if counter == 1000:
                 if(not any(finished)):
                     counter = 0
                 else:
                     return
 
     def check_result(self, res):
-        return all(v == 0 for v in res[:len(res)/2])
+        padLen = int(len(res)-len(res)/2)
+        return all(v == 0 for v in res[:padLen])
 
     def xor(self, b1, b2):
         return bytearray([x ^ y for x, y in zip(b1, b2)])
 
     def generate_sample(self, length=0, size=32):
         if(length == 0):
-            return bytearray([random.SystemRandom().randint(0, 255) for x in range(size)])
+            return bytearray([random.SystemRandom().randint(0, 255) for x in range(int(size))])
         else:
             samples = []
             for x in range(length):
                 samples.append(
-                    bytearray([random.SystemRandom().randint(0, 255) for x in range(size)]))
+                    bytearray([random.SystemRandom().randint(0, 255) for x in range(int(size))]))
             return samples
 
 
@@ -110,9 +118,16 @@ def read(path):
 
 
 if __name__ == '__main__':
-    f1 = read("test_files/test.bin")
-    f2 = read("test_files/diff.bin")
+    f1 = read("tests/test_files/test.bin")
+    f2 = read("tests/test_files/same.bin")
+    f3 = read("tests/test_files/diff.bin")
     fe = FuzzyExtractor()
-    r, p = fe.gen_config(f1, "./fe.config")
+    r, p = fe.gen(f1, locker_size=25, lockers=10000, confidence=None)
+    print("Testing rep with same value")
+    fe.rep(f1, p, num_processes=6)
+    print("Testing rep with value from same biometric")
+    fe.rep(f2, p, num_processes=6)
+    print("Testing rep with value from different biometric")
+    fe.rep(f3, p)
     #cProfile.run("fe.gen(f1, lockers=1000)", sort='cumtime')
     #cProfile.run("fe.rep(f2, p)", sort="cumtime")
