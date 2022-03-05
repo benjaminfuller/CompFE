@@ -11,8 +11,9 @@ from hashlib import sha512
 
 class FuzzyExtractor:
 
-    def __init__(self, hash=sha512):
+    def __init__(self, hash=sha512, selection_method="Uniform"):
         self.hash = hash
+        self.selection_method=selection_method
 
     #TODO Haven't converted this to Python3.  Current implementation doesn't require
     # confidence information so we'll leave it alone for now
@@ -22,6 +23,27 @@ class FuzzyExtractor:
         c['confidence']['reals'] = real
         return self.gen(bits, c['locker_size'], c['lockers'], c['confidence'])
 
+    def sample_uniform(self, size, biometric_len, number_samples=1, confidence=None):
+        if confidence is None:
+            pick_range = range(0, biometric_len-1)
+        else:
+            pick_range = self.confidence_range(
+            confidence, list(range(0, biometric_len-1)))
+
+            #print(len(pick_range))
+            if(len(pick_range) < 1024):
+                return "Confidence range too small"
+
+        randGen = random.SystemRandom()
+        return np.array([randGen.sample(pick_range, size) for x in range(number_samples)])
+
+    #TODO write this
+    def sample_sixia(self, size, biometric_len, number_samples=1, confidence=None):
+        if confidence is None:
+            print("Can't run Smart sampling without confidence, calling uniform")
+            return self.sample_uniform(size, biometric_len, number_samples, confidence)
+        #TODO write
+
     def gen(self, bits, locker_size=43, lockers=10000, confidence=None):
         length = self.hash().digest_size
         key_len = int(length/2)
@@ -30,18 +52,14 @@ class FuzzyExtractor:
         zeros = bytearray([0 for x in range(pad_len)])
         check = zeros + r
         seeds = self.generate_sample(length=lockers, size=16)
-        if confidence is None:
-            pick_range = range(0, len(bits)-1)
-        else:
-            pick_range = self.confidence_range(
-                confidence, list(range(0, len(bits)-1)))
 
-            print(len(pick_range))
-            if(len(pick_range) < 1024):
-                return "Confidence range too small"
-        randGen = random.SystemRandom()
-        positions = np.array([randGen.sample(pick_range, locker_size) for x in range(lockers)])
+
         p = []
+        positions = None
+        if self.selection_method == "Uniform":
+            positions = self.sample_uniform(locker_size, biometric_len=len(bits), number_samples=lockers, confidence=confidence)
+        if self.selection_method == "Smart":
+            positions = self.sample_sixia(locker_size, biometric_len=len(bits), number_samples=lockers, confidence=confidence)
         for x in range(lockers):
             v_i = np.array([bits[y] for y in positions[x]])
             seed = seeds[x]
@@ -124,7 +142,7 @@ if __name__ == '__main__':
     f2 = read("tests/test_files/same.bin")
     f3 = read("tests/test_files/diff.bin")
     fe = FuzzyExtractor()
-    r, p = fe.gen(f1, locker_size=35, lockers=100000, confidence=None)
+    r, p = fe.gen(f1, locker_size=25, lockers=10000, confidence=None)
     print("Testing rep with same value")
     fe.rep(f1, p, num_processes=6)
     print("Testing rep with value from same biometric")
