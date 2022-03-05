@@ -79,6 +79,7 @@ class FuzzyExtractor:
 
     def rep_process(self, bits, p, finished, process_id):
         counter = 0
+   #     print("Rep processing with "+str(process_id))
         for c_i, positions, seed in p:
             v_i = np.array([bits[x] for x in positions])
             h = bytearray(hmac.new(seed, v_i, self.hash).digest())
@@ -89,6 +90,7 @@ class FuzzyExtractor:
                 return
             counter += 1
             if counter == 1000:
+  #              print(str(process_id)+" resetting counter")
                 if(not any(finished)):
                     counter = 0
                 else:
@@ -122,7 +124,7 @@ if __name__ == '__main__':
     f2 = read("tests/test_files/same.bin")
     f3 = read("tests/test_files/diff.bin")
     fe = FuzzyExtractor()
-    r, p = fe.gen(f1, locker_size=25, lockers=10000, confidence=None)
+    r, p = fe.gen(f1, locker_size=35, lockers=100000, confidence=None)
     print("Testing rep with same value")
     fe.rep(f1, p, num_processes=6)
     print("Testing rep with value from same biometric")
