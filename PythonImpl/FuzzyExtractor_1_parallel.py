@@ -37,12 +37,39 @@ class FuzzyExtractor:
         randGen = random.SystemRandom()
         return np.array([randGen.sample(pick_range, size) for x in range(number_samples)])
 
-    #TODO write this
-    def sample_sixia(self, size, biometric_len, number_samples=1, confidence=None):
+    # Should return a numpy array of python arrays each chosen according to the algorithm
+    #   written by Sixia and Alex that uses confidence information to pick better subsets
+    # Assumptions: the confidence array is a list of probabilities with length equal to 
+    #   the length of the feature vector  relating to the probability that that bit
+    #   agrees with the biometric. In the original algorithm, rather than searching for an 
+    #   error free subset, they searched for an subset that was only ones and thus did not
+    #   have to consider agreement with another bit string (thus the probability was for 
+    #   each index being 1 not being in agreement).
+    def sample_sixia(self, size, biometric_len, number_samples=1, confidence=None, alpha_param=0.75):
         if confidence is None:
             print("Can't run Smart sampling without confidence, calling uniform")
             return self.sample_uniform(size, biometric_len, number_samples, confidence)
-        #TODO write
+
+        sample_array = []
+        new_confidence = [x ** alpha_param for x in confidence]  # Is this the most efficient way?
+        iter_total_prob = sum(new_confidence)
+        new_confidence = [x / iter_total_prob for x in new_confidence]
+        for set_selection_iter in range(number_samples):
+            sample_indices = random.choices(range(len(new_confidence)), weights=new_confidence, k=size)
+            dedup_indices = list(set(sample_indices))
+            loop_count = 1
+            while len(dedup_indices) < size:
+                new_index = random.choices(range(len(new_confidence)), weights=new_confidence, k=1)
+                sample_indices = dedup_indices
+                sample_indices.extend(new_index)
+                dedup_indices = []
+                [dedup_indices.append(n) for n in sample_indices if n not in dedup_indices] 
+                loop_count = loop_count +1
+                if loop_count == 1000000:
+                    print("Smart sampling failed to find a non-duplicating subset")
+                    exit(1)
+            sample_array.append(dedup_indices)
+        return np.array(sample_array)
 
     def gen(self, bits, locker_size=43, lockers=10000, confidence=None):
         length = self.hash().digest_size

@@ -7,7 +7,7 @@ import re
 import random
 from multiprocessing import Pool
 import numpy as np
-np.random.seed(1337) # for reproducibility`
+#np.random.seed(1337) # for reproducibility`
 
 
 # %matplotlib notebook
@@ -39,17 +39,44 @@ def sample_uniform(size, biometric_len, number_samples=1, confidence=None):
     if confidence is None:
         pick_range = range(0, biometric_len - 1)
     else:
-        pick_range = self.confidence_range(
-            confidence, list(range(0, biometric_len - 1)))
-
-        # print(len(pick_range))
-        if (len(pick_range) < 1024):
-            return "Confidence range too small"
+        exit(1)
 
     randGen = random.SystemRandom()
     return np.array([randGen.sample(pick_range, size) for x in range(number_samples)])
 
-    
+# Should return a numpy array of python arrays each chosen according to the algorithm
+#   written by Sixia and Alex that uses confidence information to pick better subsets
+# Assumptions: the confidence array is a list of probabilities with length equal to 
+#   the length of the feature vector  relating to the probability that that bit
+#   agrees with the biometric. In the original algorithm, rather than searching for an 
+#   error free subset, they searched for an subset that was only ones and thus did not
+#   have to consider agreement with another bit string (thus the probability was for 
+#   each index being 1 not being in agreement).
+def sample_sixia(size, biometric_len, number_samples=1, confidence=None, alpha_param=0.75):
+    if confidence is None:
+        print("Can't run Smart sampling without confidence, calling uniform")
+        return sample_uniform(size, biometric_len, number_samples, confidence)
+
+    sample_array = []
+    new_confidence = [x ** alpha_param for x in confidence]  # Is this the most efficient way?
+    iter_total_prob = sum(new_confidence)
+    new_confidence = [x / iter_total_prob for x in new_confidence]
+    for set_selection_iter in range(number_samples):
+        sample_indices = random.choices(range(len(new_confidence)), weights=new_confidence, k=size)
+        dedup_indices = list(set(sample_indices))
+        loop_count = 1
+        while len(dedup_indices) < size:
+            new_index = random.choices(range(len(new_confidence)), weights=new_confidence, k=1)
+            sample_indices = dedup_indices
+            sample_indices.extend(new_index)
+            dedup_indices = []
+            [dedup_indices.append(n) for n in sample_indices if n not in dedup_indices] 
+            loop_count = loop_count +1
+            if loop_count == 1000000:
+                print("Smart sampling failed to find a non-duplicating subset")
+                exit(1)
+        sample_array.append(dedup_indices)
+    return np.array(sample_array)
     
 def gen(template,positions):
     ret_value = []
@@ -142,7 +169,7 @@ for k in range(len(subsample_list)):
         # print (person_tpr,sum(person_tpr))
         reps_done += len(person_tpr)
         all_tpr.extend(  person_tpr   )
-    	print ("TPR : ", str(sum(all_tpr)/len(all_tpr)) , ",Average time per rep: ",str(  (rep_end-rep_start)/len(person_tpr)  ),",Reps done: ",reps_done)
+        print("TPR : ", str(sum(all_tpr)/len(all_tpr)) , ",Average time per rep: ",str(  (rep_end-rep_start)/len(person_tpr)  ),",Reps done: ",reps_done)
     print ("Subsample size", str(subsample_list[k]), "TPR : ", str(sum(all_tpr)/len(all_tpr)) ,",Reps done: ",reps_done)
 
 
