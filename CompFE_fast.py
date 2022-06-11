@@ -15,6 +15,7 @@ import numpy as np
 
 subsample_classes = 50
 subsample_list = [65,70,75]
+alphas = [1, 1, 1]
 num_lockers = 500000
 
 
@@ -39,44 +40,32 @@ def sample_uniform(size, biometric_len, number_samples=1, confidence=None):
     if confidence is None:
         pick_range = range(0, biometric_len - 1)
     else:
-        exit(1)
+        pick_range = self.confidence_range(
+            confidence, list(range(0, biometric_len - 1)))
+
+        # print(len(pick_range))
+        if (len(pick_range) < 1024):
+            return "Confidence range too small"
 
     randGen = random.SystemRandom()
     return np.array([randGen.sample(pick_range, size) for x in range(number_samples)])
 
-# Should return a numpy array of python arrays each chosen according to the algorithm
-#   written by Sixia and Alex that uses confidence information to pick better subsets
-# Assumptions: the confidence array is a list of probabilities with length equal to 
-#   the length of the feature vector  relating to the probability that that bit
-#   agrees with the biometric. In the original algorithm, rather than searching for an 
-#   error free subset, they searched for an subset that was only ones and thus did not
-#   have to consider agreement with another bit string (thus the probability was for 
-#   each index being 1 not being in agreement).
-def sample_sixia(size, biometric_len, number_samples=1, confidence=None, alpha_param=0.75):
-    if confidence is None:
-        print("Can't run Smart sampling without confidence, calling uniform")
-        return sample_uniform(size, biometric_len, number_samples, confidence)
+def binary_entropy(val):
+    return -(val) * math.log2(val) - (1 - val) * (math.log(1-val))
 
-    sample_array = []
-    new_confidence = [x ** alpha_param for x in confidence]  # Is this the most efficient way?
-    iter_total_prob = sum(new_confidence)
-    new_confidence = [x / iter_total_prob for x in new_confidence]
-    for set_selection_iter in range(number_samples):
-        sample_indices = random.choices(range(len(new_confidence)), weights=new_confidence, k=size)
-        dedup_indices = list(set(sample_indices))
-        loop_count = 1
-        while len(dedup_indices) < size:
-            new_index = random.choices(range(len(new_confidence)), weights=new_confidence, k=1)
-            sample_indices = dedup_indices
-            sample_indices.extend(new_index)
-            dedup_indices = []
-            [dedup_indices.append(n) for n in sample_indices if n not in dedup_indices] 
-            loop_count = loop_count +1
-            if loop_count == 1000000:
-                print("Smart sampling failed to find a non-duplicating subset")
-                exit(1)
-        sample_array.append(dedup_indices)
-    return np.array(sample_array)
+def read_complex_conf(filepath):
+        with open(filepath, 'r') as f:
+            confidence = []
+            lines = f.readlines()
+            for line in lines:
+                numbers = line[42:].strip()
+                numbers_list = numbers.split(' ')
+                predictability = (1 - float(numbers_list[2]))
+                entropy = binary_entropy(float(numbers_list[3]))
+                pair = [predictability, entropy]
+                confidence.append(pair)
+            return confidence
+
     
 def gen(template,positions):
     ret_value = []
@@ -98,6 +87,8 @@ print ("Sampling " + str(subsample_classes) + " classes")
 
 num_classes = random.sample(range(CLASSES), subsample_classes)
 
+print("Reading Confidence")
+confidence = read_complex_conf(cwd + "/PythonImpl/AuxiliaryFiles/ConfidenceInfo.txt")
 
 print ("Reading templates")
 templates = []
@@ -108,10 +99,37 @@ for x in range(len(num_classes)):
         ret_template = np.array(read_fvector(template_list[y]))
         template_temp.append(ret_template)
     templates.append(template_temp)
+
+def sample_sixia_with_entropy(size, biometric_len, number_samples, confidence, alpha_param):
+        if confidence is None:
+            print("Can't run Smart sampling without confidence, calling uniform")
+            return sample_uniform(size, biometric_len, number_samples, confidence)
+
+        sample_array = []
+        new_confidence = [pair[0] ** (alpha_param / pair[1]) for pair in confidence]
+        iter_total_prob = sum(new_confidence)
+        new_confidence = [x / iter_total_prob for x in new_confidence]
+        for set_selection_iter in range(number_samples):
+            sample_indices = random.choices(range(len(new_confidence)), weights=new_confidence, k=size)
+            dedup_indices = list(set(sample_indices))
+            loop_count = 1
+            while len(dedup_indices) < size:
+                new_index = random.choices(range(len(new_confidence)), weights=new_confidence, k=1)
+                sample_indices = dedup_indices
+                sample_indices.extend(new_index)
+                dedup_indices = []
+                [dedup_indices.append(n) for n in sample_indices if n not in dedup_indices]
+                loop_count = loop_count +1
+                if loop_count == 1000000:
+                    print("Smart sampling failed to find a non-duplicating subset")
+                    exit(1)
+            sample_array.append(dedup_indices)
+        return np.array(sample_array)
     
 for k in range(len(subsample_list)):
     print ("Generating positions")
-    positions = sample_uniform(subsample_list[k],1024,num_lockers)    
+#    positions = sample_uniform(subsample_list[k],1024,num_lockers)    
+    positions = sample_sixia_with_entropy(subsample_list[k],1024,num_lockers,confidence,alphas[k])       
 
 
     import multiprocessing as mp
@@ -155,27 +173,19 @@ for k in range(len(subsample_list)):
 
 #         gen_end = time.time()
 
-        #print ("Gen time: " ,gen_end-gen_start)
+#         print ("Gen time: " ,gen_end-gen_start)
 
 
         person_tpr = []
         rep_start = time.time()
 
         for y in range(1,len(templates[templateNum])):
-            person_tpr.append( rep(templates[templateNum][y],positions,gen_template,32) )
+            person_tpr.append( rep(templates[templateNum][y],positions,gen_template,8) )
         rep_end = time.time()
         print ("Rep time: " ,rep_end-rep_start)
 
         # print (person_tpr,sum(person_tpr))
         reps_done += len(person_tpr)
-        all_tpr.extend(  person_tpr   )
-        print("TPR : ", str(sum(all_tpr)/len(all_tpr)) , ",Average time per rep: ",str(  (rep_end-rep_start)/len(person_tpr)  ),",Reps done: ",reps_done)
+        all_tpr.extend(  person_tpr)
+    # print ("TPR : ", str(sum(all_tpr)/len(all_tpr)) , ",Average time per rep: ",str(  (rep_end-rep_start)/len(person_tpr)  ),",Reps done: ",reps_done)
     print ("Subsample size", str(subsample_list[k]), "TPR : ", str(sum(all_tpr)/len(all_tpr)) ,",Reps done: ",reps_done)
-
-
-
-
-
-
-
-
