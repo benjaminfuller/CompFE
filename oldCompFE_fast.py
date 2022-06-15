@@ -65,6 +65,51 @@ def gen(template,positions):
         ret_value.append(v_i)
     return ret_value
 
+def entropy_helper(template,template_split,gt, gt_split ):
+    i = 0
+    blue_list = []
+    red_list = []
+    for x in range(template.shape[0]):
+        for y in range(template_split.shape[0]):
+            if(gt[x][0] < gt_split[y][0]):
+                continue
+            dis = np.count_nonzero(template[x]!=template_split[y])
+            dis = dis/template[x].shape[0]
+	#Just a stupid hack
+            if (dis == 0):
+                continue
+            if(gt[x][0] == gt_split[y][0]):
+                blue_list.append(dis)
+            else:
+                red_list.append(dis)
+
+    return blue_list,red_list
+
+    
+def entropy(templates, ground_truth, num_jobs=32):
+    blue = []
+    red = []
+    i = 0
+    number_jobs = num_jobs
+
+    templates_split = np.array(np.array_split(templates, number_jobs))
+    ground_truth_split = np.array(np.array_split(ground_truth, number_jobs))
+    
+
+    print (ground_truth[0],ground_truth_split[0][0])
+
+    
+    found_match = Parallel(n_jobs=number_jobs)(delayed(entropy_helper)
+                                               (templates,templates_split[i],ground_truth,ground_truth_split[i])
+                                               for i in range(number_jobs))
+    for x in range(len(found_match)):
+            blue.extend(found_match[x][0])
+            red.extend(found_match[x][1])
+    
+    print (len(blue),len(red))
+    u = np.mean(red)
+    entropy = (u*(1-u))/np.var(red)
+    print (entropy)
 
     
 cwd = os.getcwd()
