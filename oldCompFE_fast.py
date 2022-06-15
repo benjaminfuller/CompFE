@@ -9,12 +9,15 @@ from multiprocessing import Pool
 import numpy as np
 #np.random.seed(1337) # for reproducibility`
 
+
 # %matplotlib notebook
 
-subsample_classes = 50
-subsample_list = [75, 80]
-alphas = [30] * 2
-num_lockers = 500000
+
+subsample_classes = 150
+subsample_list = [70]
+alphas = [30]
+num_lockers = 250000
+
 
 numbers = re.compile(r'(\d+)')
 def numericalSort(value):
@@ -22,25 +25,19 @@ def numericalSort(value):
     parts[1::2] = map(int, parts[1::2])
     return parts
 
+
 def read_fvector(filePath):
     with open(filePath) as f:
         for line in f.readlines():
             temp_str = np.fromstring(line, sep=",")
             return [int(x) for x in temp_str]
+        
+        
 
 # Returns a numpy array of python arrays each chosen randomly with size number_samples
 # Assumptions: Github Bots are bad
 def sample_uniform(size, biometric_len, number_samples=1, confidence=None):
-    if confidence is None:
-        pick_range = range(0, biometric_len - 1)
-    else:
-        pick_range = self.confidence_range(
-            confidence, list(range(0, biometric_len - 1)))
-
-        # print(len(pick_range))
-        if (len(pick_range) < 1024):
-            return "Confidence range too small"
-
+    pick_range = range(0, biometric_len - 1)
     randGen = random.SystemRandom()
     return np.array([randGen.sample(pick_range, size) for x in range(number_samples)])
 
@@ -59,6 +56,7 @@ def read_complex_conf(filepath):
                 pair = [predictability, entropy]
                 confidence.append(pair)
             return confidence
+
     
 def gen(template,positions):
     ret_value = []
@@ -66,18 +64,22 @@ def gen(template,positions):
         v_i = template[positions[x]]
         ret_value.append(v_i)
     return ret_value
+
+
     
 cwd = os.getcwd()
 
-folder_list = sorted(glob.glob(cwd + "/CompFE/iris_right_all_dense_0.205_57-75_1024_folders/*"),key=numericalSort)
+
+folder_list = sorted(glob.glob(cwd + "/iris_right_all_dense_0.205_57-75_1024_folders/*"),key=numericalSort)
 CLASSES = len(folder_list)
 print ("Folders: ",len(folder_list))
 print ("Sampling " + str(subsample_classes) + " classes")
 
+
 num_classes = random.sample(range(CLASSES), subsample_classes)
 
 print("Reading Confidence")
-confidence = read_complex_conf(cwd + "/CompFE/PythonImpl/AuxiliaryFiles/ConfidenceInfo.txt")
+confidence = read_complex_conf(cwd + "/PythonImpl/AuxiliaryFiles/ConfidenceInfo.txt")
 
 print ("Reading templates")
 templates = []
@@ -118,7 +120,7 @@ def sample_sixia_with_entropy(size, biometric_len, number_samples, confidence, a
 for k in range(len(subsample_list)):
     print ("Generating positions")
 #    positions = sample_uniform(subsample_list[k],1024,num_lockers)    
-    positions = sample_sixia_with_entropy(subsample_list[k],1024,num_lockers,confidence,alphas[k])    
+    positions = sample_sixia_with_entropy(subsample_list[k],1024,num_lockers,confidence,alphas[k])       
 
 
     import multiprocessing as mp
@@ -131,6 +133,8 @@ for k in range(len(subsample_list)):
                 return 1
             i = i + 1
         return 0
+
+
 
     def rep(template, positions, gen_template, num_jobs=32):
         i = 0
@@ -147,9 +151,10 @@ for k in range(len(subsample_list)):
                 return 1
         return 0
 
+
     all_tpr = []
     reps_done = 0
-    print ("Starting gen and rep for ", str(alphas[k]), str(subsample_list[k]), num_lockers)
+    print ("Starting gen and rep for ", str(subsample_list[k]), num_lockers)
     for x in range(len(templates)):
         templateNum = x
 
@@ -159,27 +164,19 @@ for k in range(len(subsample_list)):
 
 #         gen_end = time.time()
 
-#        print ("Gen time: " ,gen_end-gen_start)
+#         print ("Gen time: " ,gen_end-gen_start)
 
 
         person_tpr = []
         rep_start = time.time()
 
         for y in range(1,len(templates[templateNum])):
-            person_tpr.append( rep(templates[templateNum][y],positions,gen_template,32) )
+            person_tpr.append( rep(templates[templateNum][y],positions,gen_template,8) )
         rep_end = time.time()
-#        print ("Rep time: " ,rep_end-rep_start)
+        print ("Rep time: " ,rep_end-rep_start)
 
-#        print (person_tpr,sum(person_tpr))
+        # print (person_tpr,sum(person_tpr))
         reps_done += len(person_tpr)
-        all_tpr.extend(  person_tpr   )
+        all_tpr.extend(  person_tpr)
         print ("TPR : ", str(sum(all_tpr)/len(all_tpr)) , ",Average time per rep: ",str(  (rep_end-rep_start)/len(person_tpr)  ),",Reps done: ",reps_done)
     print ("Subsample size", str(subsample_list[k]), "TPR : ", str(sum(all_tpr)/len(all_tpr)) ,",Reps done: ",reps_done)
-
-
-
-
-
-
-
-
