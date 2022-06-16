@@ -220,6 +220,7 @@ alphas = [float(sys.argv[4])]
 num_lockers = int(sys.argv[5])
 numbers = re.compile(r'(\d+)')
 cwd = os.getcwd()
+num_cpus = mp.cpu_count()
 folder_list = sorted(glob.glob(cwd + "/iris_right_all_dense_0.205_57-75_1024_folders/*"),key=numericalSort)
 print (cwd)
 CLASSES = len(folder_list)
@@ -262,14 +263,12 @@ for k in range(len(subsample_list)):
     print ("Starting gen and rep for", str(subsample_list[k]), num_lockers)
     for x in range(len(templates)):
         templateNum = x
-
         gen_template = np.array(gen( np.array(templates[templateNum][0]),np.array(positions)))
 
-        
         person_tpr = []
         rep_start = time.time()
         for y in range(1,len(templates[templateNum])):
-            person_tpr.append(rep(templates[templateNum][y], positions, gen_template,4))
+            person_tpr.append(rep(templates[templateNum][y], positions, gen_template,num_cpus))
         rep_end = time.time()
         print ("Rep time:" ,rep_end-rep_start)
 
