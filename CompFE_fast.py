@@ -260,17 +260,19 @@ for k in range(len(subsample_list)):
         positions = sample_sixia(subsample_list[k],1024,num_lockers,confidence,alphas[k])  
     all_tpr = []
     reps_done = 0
-    print ("Starting gen and rep for", str(subsample_list[k]), num_lockers)
+    print ("Starting gen and rep for alpha", str(alphas[k]), "Subset size",str(subsample_list[k]),"and", str(num_lockers),"subsets")
     for x in range(len(templates)):
         templateNum = x
+        print("Staring gen (single threaded)")
         gen_template = np.array(gen( np.array(templates[templateNum][0]),np.array(positions)))
-
+        print("Finished Gen")
         person_tpr = []
+        print("Starting Rep")
         rep_start = time.time()
         for y in range(1,len(templates[templateNum])):
             person_tpr.append(rep(templates[templateNum][y], positions, gen_template,num_cpus))
         rep_end = time.time()
-        print ("Rep time:" ,rep_end-rep_start)
+        print("Rep time:" ,rep_end-rep_start)
 
     #    print (person_tpr,sum(person_tpr))
         reps_done += len(person_tpr)
