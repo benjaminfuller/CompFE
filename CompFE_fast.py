@@ -1,6 +1,7 @@
+from curses import pair_content
 import time
 import math
-from turtle import position
+from turtle import pos, position
 from unittest.loader import VALID_MODULE_NAME
 from joblib import Parallel, delayed
 import os
@@ -57,6 +58,7 @@ def binary_entropy(val):
     return -(val) * math.log2(val) - (1 - val) * (math.log2(1-val))
 
 def read_complex_conf(filepath):
+        bad_list = [28, 200, 503, 754]
         with open(filepath, 'r') as f:
             confidence = []
             lines = f.readlines()
@@ -66,8 +68,12 @@ def read_complex_conf(filepath):
                 predictability = (1 - float(numbers_list[2]))
                 entropy = float(numbers_list[3])
                 pair = [predictability, entropy]
-                confidence.append(pair)
-            return confidence
+                # print(numbers_list, "numbers list")
+                if int(numbers_list[0]) in bad_list:
+                    confidence.append([0,0.000000000000001])
+                else:
+                    confidence.append(pair)
+            return confidence, bad_list
 
 def gen(template,positions):
     ret_value = []
@@ -77,6 +83,7 @@ def gen(template,positions):
     return ret_value
 
 def sample_sixia(size, biometric_len, number_samples, confidence, alpha_param):
+    bad_list = [28, 200, 503, 754]
     if confidence is None:
         print("Can't run Smart sampling without confidence, calling uniform")
         return sample_uniform(size, biometric_len, number_samples, confidence)
@@ -93,7 +100,7 @@ def sample_sixia(size, biometric_len, number_samples, confidence, alpha_param):
             sample_indices = dedup_indices
             sample_indices.extend(new_index)
             dedup_indices = []
-            [dedup_indices.append(n) for n in sample_indices if n not in dedup_indices]
+            [dedup_indices.append(n) for n in sample_indices if n not in dedup_indices and n not in bad_list]
             loop_count = loop_count +1
             if loop_count == 1000000:
                 print("Smart sampling failed to find a non-duplicating subset")
@@ -106,6 +113,8 @@ def sample_sixia_entropy_threshold(size, biometric_len, number_samples, confiden
         print("No confidence file given, cannot estimate entropy. Defaulting to set size subset uniform sampling.")
         return sample_uniform(size, biometric_len, number_samples, confidence=None)
     
+    for pair in confidence:
+        print(pair)
     new_confidence = [pair[0] ** alpha_param for pair in confidence]
     total_confidence = sum(new_confidence)
     new_confidence = [item / total_confidence for item in new_confidence]
@@ -134,25 +143,25 @@ def sample_sixia_entropy_threshold(size, biometric_len, number_samples, confiden
         sample_array.append(sampled_indicies)
     return sample_array
 
+
+# Current Working Project
 def sample_sixia_with_entropy(size, biometric_len, number_samples, confidence, alpha_param):
+    bad_list = [28, 200, 503, 754]
     if confidence is None:
         print("Can't run Smart sampling without confidence, calling uniform")
         return sample_uniform(size, biometric_len, number_samples, confidence)
 
     sample_array = []
-    new_confidence = [pair[0] ** (alpha_param / pair[1]) for pair in confidence]
-    iter_total_prob = sum(new_confidence)
-    new_confidence = [x / iter_total_prob for x in new_confidence]
+    new_confidence = [pair[0] ** (alpha_param / binary_entropy(pair[1])) for pair in confidence]
+
     for set_selection_iter in range(number_samples):
         sample_indices = random.choices(range(len(new_confidence)), weights=new_confidence, k=size)
+        sample_indices = [index for index in sample_indices if index not in bad_list]
         dedup_indices = list(set(sample_indices))
         loop_count = 1
         while len(dedup_indices) < size:
-            new_index = random.choices(range(len(new_confidence)), weights=new_confidence, k=1)
-            sample_indices = dedup_indices
-            sample_indices.extend(new_index)
-            dedup_indices = []
-            [dedup_indices.append(n) for n in sample_indices if n not in dedup_indices]
+            new_index = random.choices(range(len(new_confidence)), weights=new_confidence, k=max(1,size - len(dedup_indices)))
+            [dedup_indices.append(n) for n in new_index if n not in dedup_indices and n not in bad_list]
             loop_count = loop_count +1
             if loop_count == 1000000:
                 print("Smart sampling failed to find a non-duplicating subset")
@@ -218,9 +227,18 @@ def rep(template, positions, gen_template, num_jobs=32):
     return 0
 
 def subsample(templates,positions):
+    print("In subsampling")
+    print(templates.shape)
+    print(len(positions),len(positions[0]))
     subsampled_array = []
     for x in range(templates.shape[0]):
-        subsampled_array.append(templates[x][positions])
+        # print("Template:", x)
+        new_subsample = []
+        for list in positions:
+            new_subsample = [templates[x][index] for index in list]
+            # print("Subsample:",new_subsample)
+        subsampled_array.append(new_subsample)
+    print("Returning from subsampling")
     return np.array(subsampled_array)
 
 def entropy_helper(template,template_split,gt, gt_split):
@@ -232,7 +250,8 @@ def entropy_helper(template,template_split,gt, gt_split):
             if(gt[x][0] < gt_split[y][0]):
                 continue
             dis = np.count_nonzero(template[x]!=template_split[y])
-            dis = dis/template[x].shape[1]
+            # dis = dis/template[x].shape[1]
+            dis = dis / template.shape[1]
 	#Just a stupid hack
             if (dis == 0):
                 continue
@@ -244,38 +263,46 @@ def entropy_helper(template,template_split,gt, gt_split):
     return blue_list,red_list
 
     
-def entropy(templates, ground_truth, selection_method,size_or_threshold,num_jobs=32):
+def entropy(templates, ground_truth, selection_method,size_or_threshold,num_jobs=4):
     runs = 10
     entropy_list = []
     for r in range(runs):
         if selection_method == 'complex':
             print("Using Complex Sixia Sampling")
-            positions = sample_sixia_with_entropy(size_or_threshold,1024,num_lockers,confidence,alpha_param)    
+            positions = sample_sixia_with_entropy(size_or_threshold,1024,1,confidence,alpha_param)    
         else: 
             print("Using Simple Sixia Sampling")
-        positions = sample_sixia(size_or_threshold,1024,1,confidence,alpha_param)  
+            positions = sample_sixia(size_or_threshold,1024,1,confidence,alpha_param)  
 
+        print("Subsampling Templates")
         subsampled_templates = subsample(templates,positions)
+        print("Finished Subsampling")
         blue = []
         red = []
         i = 0
+        print("Using",num_jobs,"cores for Entropy")
         number_jobs = num_jobs
 
+        print("Splitting templates and Ground Truths")
         templates_split = np.array(np.array_split(subsampled_templates, number_jobs))
         ground_truth_split = np.array(np.array_split(ground_truth, number_jobs))
+        print("Finished Split")
 
+        print("Searching for Matches")
         found_match = Parallel(n_jobs=number_jobs)(delayed(entropy_helper)
                                                    (subsampled_templates,templates_split[i],ground_truth,ground_truth_split[i])
                                                    for i in range(number_jobs))
+        print("Mathes Found:", len(found_match))
         for x in range(len(found_match)):
                 blue.extend(found_match[x][0])
                 red.extend(found_match[x][1])
 
-
+        print("Calculating Statistics")
         u = np.mean(red)
         entropy = (u*(1-u))/np.var(red)
+        print("Adding to list")
         entropy_list.append(2**(-1 * entropy))
-        print ("Entropy Run #",r," Entropy",entropy,"Mean of unlike dist",u)
+        print ("Entropy Run #",r," Entropy:",entropy,"Mean of unlike dist:",u)
         
     exp_ent = np.mean(entropy_list)
     avg_ent = -1 * math.log(exp_ent, 2)
@@ -310,10 +337,10 @@ print ("Sampling " + str(subsample_classes) + " classes")
 num_classes = random.sample(range(CLASSES), subsample_classes)
 
 print("Reading Confidence")
-confidence = read_complex_conf(cwd + "/PythonImpl/AuxiliaryFiles/ConfidenceInfoNFE.txt")
+confidence, bad_list = read_complex_conf(cwd + "/PythonImpl/AuxiliaryFiles/ConfidenceInfoNFE.txt")
 
 # positions = sample_sixia_with_entropy_entropy_threshold(0,1024,num_lockers,confidence,alpha_param,size_or_threshold)
-positions = sample_sixia_entropy_threshold(0,1024,num_lockers,confidence,alpha_param,size_or_threshold)
+# positions = sample_sixia_entropy_threshold(0,1024,num_lockers,confidence,alpha_param,size_or_threshold)
 # positions = sample_uniform_entropy_threshold(size_or_threshold,1024,num_lockers,confidence,size_or_threshold)
 # print("Number of Subsets",len(positions))
 # for subset in positions:
@@ -323,33 +350,33 @@ positions = sample_sixia_entropy_threshold(0,1024,num_lockers,confidence,alpha_p
 #     print("Sum of the subset's marginal entropies",subset_sum)
 # print("Subsets",positions)
 
-values = [len(item) for item in positions]
-plt.hist(x=values, bins='auto', color='#33ffaa')
-plt.xlabel('Lengths of subsets with fixed entropy')
-plt.ylabel('Frequency')
-plt.title("Length of subsets with " + str(size_or_threshold) + " bits of requested entropy")
-plt.show()
-plt.close()
+# values = [len(item) for item in positions]
+# plt.hist(x=values, bins='auto', color='#33ffaa')
+# plt.xlabel('Lengths of subsets with fixed entropy')
+# plt.ylabel('Frequency')
+# plt.title("Length of subsets with " + str(size_or_threshold) + " bits of requested entropy")
+# plt.show()
+# plt.close()
 
-# print ("Reading templates")
-# templates = []
-# ground_truth = []
+print ("Reading templates")
+templates = []
+ground_truth = []
 
-# for x in range(len(num_classes)):
-#     template_temp = []
-#     ground_truth_temp = []
+for x in range(len(num_classes)):
+    template_temp = []
+    ground_truth_temp = []
 
-#     template_list = glob.glob(folder_list[num_classes[x]] + "/*")
-#     for y in range(len(template_list)):
-#         ret_template = np.array(read_fvector(template_list[y]))
-#         template_temp.append(ret_template)
-#         ground_truth_temp.append([x,y])
+    template_list = glob.glob(folder_list[num_classes[x]] + "/*")
+    for y in range(len(template_list)):
+        ret_template = np.array(read_fvector(template_list[y]))
+        template_temp.append(ret_template)
+        ground_truth_temp.append([x,y])
 
-#     templates.append(template_temp)
-#     ground_truth.extend(ground_truth_temp)
-# print("Finihsed reading Templates")
+    templates.append(template_temp)
+    ground_truth.extend(ground_truth_temp)
+print("Finihsed reading Templates")
 
-# if stopping_condition is 'size':
+# if stopping_condition == 'size':
 #     print ("Generating positions with fixed size")   
 #     if selection_method == 'complex':
 #         print("Using Complex Sixia Sampling")
@@ -359,6 +386,10 @@ plt.close()
 #         positions = sample_sixia(size_or_threshold,1024,num_lockers,confidence,alpha_param)  
 #     all_tpr = []
 #     reps_done = 0
+#     for subset in positions:
+#         for index in subset:
+#             if index in bad_list:
+#                 print("Bad",index,"found")
 #     print ("Starting gen and rep for alpha", str(alpha_param), "Subset size",str(size_or_threshold),"and", str(num_lockers),"subsets")
 #     for x in range(len(templates)):
 #         templateNum = x
@@ -414,7 +445,10 @@ plt.close()
 # '''
 # 	Entropy Calculation
 # '''
-
-# templates = np.array([item for sublist in templates for item in sublist ])
-# ground_truth = np.array(ground_truth)
-# entropy,entropy_list = entropy(templates,ground_truth,selection_method,size_or_threshold)
+print("Beginning Entropy Calculation")
+templates = np.array([item for sublist in templates for item in sublist ])
+print("Shape of Templates:", templates.shape)
+ground_truth = np.array(ground_truth)
+print("Shape of Ground Truths:",ground_truth.shape)
+entropy,entropy_list = entropy(templates,ground_truth,selection_method,size_or_threshold,num_jobs=num_cpus)
+print("Finished Entropy Calculation")
