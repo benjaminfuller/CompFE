@@ -232,14 +232,14 @@ num_lockers = int(sys.argv[5])
 numbers = re.compile(r'(\d+)')
 cwd = os.getcwd()
 num_cpus = mp.cpu_count()
-folder_list = sorted(glob.glob(cwd + "/iris_best-entropy/*"),key=numericalSort)
+folder_list = sorted(glob.glob(cwd + "/CompFE/iris_best-entropy/*"),key=numericalSort)
 CLASSES = len(folder_list)
 print ("Folders: ",len(folder_list))
 print ("Sampling " + str(subsample_classes) + " classes")
 num_classes = random.sample(range(CLASSES), subsample_classes)
 
 print("Reading Confidence")
-confidence, bad_list = read_complex_conf(cwd + "/PythonImpl/AuxiliaryFiles/ConfidenceInfoNFE.txt")
+confidence, bad_list = read_complex_conf(cwd + "/CompFE/PythonImpl/AuxiliaryFiles/ConfidenceInfoNFE.txt")
 
 print ("Reading templates")
 templates = []
