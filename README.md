@@ -1,6 +1,6 @@
 # CompFE
 Computational Fuzzy Extractors
-
+ 
 
 Copyright 2018 Benjamin Fuller and Sailesh Simhadri
 
