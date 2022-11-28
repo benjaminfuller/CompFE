@@ -154,8 +154,8 @@ def entropy_helper(template,template_split,gt, gt_split):
             if(gt[x][0] < gt_split[y][0]):
                 continue
             dis = np.count_nonzero(template[x]!=template_split[y])
-            # dis = dis/template[x].shape[1]
-            dis = dis / template.shape[1]
+            if len(template[x]) != 0:
+              dis = dis / len(template[x])
 	#Just a stupid hack
             if (dis == 0):
                 continue
