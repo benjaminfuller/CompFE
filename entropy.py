@@ -173,11 +173,11 @@ def entropy_helper(template,template_split,gt, gt_split):
     return blue_list,red_list
 
     
-def entropy(templates, ground_truth, selection_method,size_or_threshold,num_jobs=4,positions=[]):
+def entropy(templates, ground_truth, selection_method,size_or_threshold,num_jobs=4,runs=10,positions=[]):
     if len(positions) != 0:
         runs = len(positions)
     else: 
-        runs = 10
+        runs = runs
     
     entropy_list = []
     for r in range(runs):
