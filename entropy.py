@@ -137,18 +137,12 @@ def rep(template, positions, gen_template, num_jobs=32):
     return 0
 
 def subsample(templates,positions):
-    print("In subsampling")
-    print(templates.shape)
-    print(len(positions),len(positions[0]))
     subsampled_array = []
     for x in range(templates.shape[0]):
-        # print("Template:", x)
         new_subsample = []
         for list in positions:
             new_subsample = [templates[x][index] for index in list]
-            # print("Subsample:",new_subsample)
         subsampled_array.append(new_subsample)
-    print("Returning from subsampling")
     return np.array(subsampled_array)
 
 def entropy_helper(template,template_split,gt, gt_split):
@@ -189,22 +183,16 @@ def entropy(templates, ground_truth, selection_method,size_or_threshold,num_jobs
                 print("Using Simple Sixia Sampling")
                 positions = sample_sixia(size_or_threshold,1024,1,confidence,alpha_param)  
 
-        print("Subsampling Templates")
         subsampled_templates = subsample(templates,positions[r:r+1])
-        print(len(subsampled_templates), len(subsampled_templates[0]))
-        print("Finished Subsampling")
         blue = []
         red = []
         i = 0
         print("Using",num_jobs,"cores for Entropy")
         number_jobs = num_jobs
 
-        print("Splitting templates and Ground Truths")
         templates_split = np.array(np.array_split(subsampled_templates, number_jobs))
         ground_truth_split = np.array(np.array_split(ground_truth, number_jobs))
-        print("Finished Split")
 
-        print("Searching for Matches")
         found_match = Parallel(n_jobs=number_jobs)(delayed(entropy_helper)
                                                    (subsampled_templates,templates_split[i],ground_truth,ground_truth_split[i])
                                                    for i in range(number_jobs))
@@ -213,15 +201,12 @@ def entropy(templates, ground_truth, selection_method,size_or_threshold,num_jobs
                 blue.extend(found_match[x][0])
                 red.extend(found_match[x][1])
 
-        print("Calculating Statistics")
         u = np.mean(red)
         degrees_freedom = (u*(1-u))/np.var(red)
-        print("Adding to list")
 
         entropy = degrees_freedom * binary_entropy(u)
 
         entropy_list.append(2**(-1 * entropy))
-        print(u,np.var(red))
         print ("Entropy Run #",r," Entropy:",entropy,"Mean of unlike dist:",u, "Mean of like:", np.mean(blue))
         
     exp_ent = np.mean(entropy_list)
@@ -245,20 +230,17 @@ num_lockers = int(sys.argv[5])
 start = time.time()
 t = time.localtime()
 current_time = time.strftime("%H:%M:%S", t)
-print(current_time)
+print("Current time:",current_time)
 numbers = re.compile(r'(\d+)')
 cwd = os.getcwd()
 num_cpus = mp.cpu_count()
 folder_list = sorted(glob.glob(cwd + "/CompFE/iris_best-entropy/*"),key=numericalSort)
 CLASSES = len(folder_list)
 print ("Folders: ",len(folder_list))
-print ("Sampling " + str(356) + " classes")
 num_classes = random.sample(range(CLASSES), 356)
 
-print("Reading Confidence")
 confidence, bad_list = read_complex_conf(cwd + "/CompFE/PythonImpl/AuxiliaryFiles/ConfidenceInfoNFE.txt")
 
-print ("Reading templates")
 templates = []
 ground_truth = []
 
@@ -274,48 +256,13 @@ for x in range(len(num_classes)):
 
     templates.append(template_temp)
     ground_truth.extend(ground_truth_temp)
-print("Finihsed reading Templates")
  
-# if selection_method == 'complex':
-#     print("Using Complex Sixia Sampling")
-#     positions = sample_sixia_with_entropy(size_or_threshold,1024,num_lockers,confidence,alpha_param)    
-# else: 
-#     print("Using Simple Sixia Sampling")
-#     positions = sample_sixia(size_or_threshold,1024,num_lockers,confidence,alpha_param)  
-# all_tpr = []
-# reps_done = 0
-# print ("Starting gen and rep for alpha", str(alpha_param), "Subset size",str(size_or_threshold),"and", str(num_lockers),"subsets")
-# for x in range(len(templates)):
-#     templateNum = x
-#     print("Staring gen (single threaded)")
-#     gen_template = np.array(gen( np.array(templates[templateNum][0]),np.array(positions)))
-#     print("Finished Gen")
-#     person_tpr = []
-#     print("Starting Rep")
-#     rep_start = time.time()
-#     for y in range(1,len(templates[templateNum])):
-#         person_tpr.append(rep(templates[templateNum][y], positions, gen_template,num_cpus))
-#     rep_end = time.time()
-#     print("Rep time:" ,rep_end-rep_start)
-
-# #    print (person_tpr,sum(person_tpr))
-#     reps_done += len(person_tpr)
-
-#     all_tpr.extend( person_tpr)
-#     print ("TPR :", str(sum(all_tpr)/len(all_tpr)), "| Average time per rep:", str((rep_end-rep_start)/len(person_tpr)  ),"| Reps done:", reps_done)
-# print ("Subsample size:", str(size_or_threshold), "| TPR :", str(sum(all_tpr)/len(all_tpr)) ,"| Reps done:",reps_done)
-
-
 # '''
 # 	Entropy Calculation
 # '''
-print("Beginning Entropy Calculation")
 templates = np.array([item for sublist in templates for item in sublist ])
-print("Shape of Templates:", templates.shape)
 ground_truth = np.array(ground_truth)
-print("Shape of Ground Truths:",ground_truth.shape)
 entropy,entropy_list = entropy(templates,ground_truth,selection_method,size_or_threshold,num_jobs=num_cpus,runs=subsample_classes)
-print("Finished Entropy Calculation")
 print ("Entropy for alpha", str(alpha_param), "Subset size",str(size_or_threshold),"and", str(subsample_classes),"subsets")
 end = time.time()
 print(str(end - start))
