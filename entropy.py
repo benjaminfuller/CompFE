@@ -173,42 +173,56 @@ def entropy_helper(template,template_split,gt, gt_split):
     return blue_list,red_list
 
     
-def entropy(templates, ground_truth, selection_method,size_or_threshold,num_jobs=4,runs=10):
+def entropy(templates, ground_truth, selection_method,size_or_threshold,num_jobs=4,positions=[]):
+    if len(positions) != 0:
+        runs = len(positions)
+    else: 
+        runs = 10
+    
     entropy_list = []
     for r in range(runs):
-        if selection_method == 'complex':
-            print("Using Complex Sixia Sampling")
-            positions = sample_sixia_with_entropy(size_or_threshold,1024,1,confidence,alpha_param)    
-        else: 
-            print("Using Simple Sixia Sampling")
-            positions = sample_sixia(size_or_threshold,1024,1,confidence,alpha_param)  
+        if len(positions) == 0:
+            if selection_method == 'complex':
+                print("Using Complex Sixia Sampling")
+                positions = sample_sixia_with_entropy(size_or_threshold,1024,1,confidence,alpha_param)    
+            else: 
+                print("Using Simple Sixia Sampling")
+                positions = sample_sixia(size_or_threshold,1024,1,confidence,alpha_param)  
 
-        subsampled_templates = subsample(templates,positions)
-        
+        print("Subsampling Templates")
+        subsampled_templates = subsample(templates,positions[r:r+1])
+        print(len(subsampled_templates), len(subsampled_templates[0]))
+        print("Finished Subsampling")
         blue = []
         red = []
         i = 0
+        print("Using",num_jobs,"cores for Entropy")
         number_jobs = num_jobs
 
-        
+        print("Splitting templates and Ground Truths")
         templates_split = np.array(np.array_split(subsampled_templates, number_jobs))
         ground_truth_split = np.array(np.array_split(ground_truth, number_jobs))
-        
+        print("Finished Split")
 
         print("Searching for Matches")
         found_match = Parallel(n_jobs=number_jobs)(delayed(entropy_helper)
                                                    (subsampled_templates,templates_split[i],ground_truth,ground_truth_split[i])
                                                    for i in range(number_jobs))
-        print("Mathes Found:", len(found_match))
+        
         for x in range(len(found_match)):
                 blue.extend(found_match[x][0])
                 red.extend(found_match[x][1])
 
-        
+        print("Calculating Statistics")
         u = np.mean(red)
-        entropy = (u*(1-u))/np.var(red)
+        degrees_freedom = (u*(1-u))/np.var(red)
+        print("Adding to list")
+
+        entropy = degrees_freedom * binary_entropy(u)
+
         entropy_list.append(2**(-1 * entropy))
-        print ("Entropy Run #",r," Entropy:",entropy,"Mean of unlike dist:",u)
+        print(u,np.var(red))
+        print ("Entropy Run #",r," Entropy:",entropy,"Mean of unlike dist:",u, "Mean of like:", np.mean(blue))
         
     exp_ent = np.mean(entropy_list)
     avg_ent = -1 * math.log(exp_ent, 2)
