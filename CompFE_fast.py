@@ -1,4 +1,5 @@
 import math
+import time
 from joblib import Parallel, delayed
 import os
 import sys
@@ -292,8 +293,8 @@ def entropy(templates, ground_truth, selection_method,size_or_threshold,num_jobs
         number_jobs = num_jobs
 
         print("Splitting templates and Ground Truths")
-        templates_split = np.array(np.array_split(subsampled_templates, number_jobs))
-        ground_truth_split = np.array(np.array_split(ground_truth, number_jobs))
+        templates_split = np.array(np.array_split(subsampled_templates, number_jobs),dtype=object)
+        ground_truth_split = np.array(np.array_split(ground_truth, number_jobs),dtype=object)
         print("Finished Split")
 
         print("Searching for Matches")
