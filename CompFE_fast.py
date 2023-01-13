@@ -403,31 +403,31 @@ if stopping_condition == 'size':
         for index in subset:
             if index in bad_list:
                 print("Bad",index,"found")
-    # print ("Starting gen and rep for alpha", str(alpha_param), "Subset size",str(size_or_threshold),"and", str(num_lockers),"subsets")
-    # for x in range(len(templates)):
-    #     templateNum = x
-    #     print("Staring gen (single threaded)")
-    #     gen_template = np.array(gen( np.array(templates[templateNum][0]),np.array(positions)))
-    #     print("Finished Gen")
-    #     person_tpr = []
-    #     print("Starting Rep")
-    #     rep_start = time.time()
-    #     matches = []
-    #     for y in range(1,len(templates[templateNum])):
-    #         temp_matches = rep(templates[templateNum][y], positions, gen_template,num_cpus)
-    #         matches.extend(temp_matches)
-    #         person_tpr.append(temp_matches != [])
-    #     rep_end = time.time()
-    #     print("Rep time:" ,rep_end-rep_start)
+    print ("Starting gen and rep for alpha", str(alpha_param), "Subset size",str(size_or_threshold),"and", str(num_lockers),"subsets")
+    for x in range(len(templates)):
+        templateNum = x
+        print("Staring gen (single threaded)")
+        gen_template = np.array(gen( np.array(templates[templateNum][0]),np.array(positions)))
+        print("Finished Gen")
+        person_tpr = []
+        print("Starting Rep")
+        rep_start = time.time()
+        matches = []
+        for y in range(1,len(templates[templateNum])):
+            temp_matches = rep(templates[templateNum][y], positions, gen_template,num_cpus)
+            matches.extend(temp_matches)
+            person_tpr.append(temp_matches != [])
+        rep_end = time.time()
+        print("Rep time:" ,rep_end-rep_start)
 
-    # #    print (person_tpr,sum(person_tpr))
-    #     reps_done += len(person_tpr)
+    #    print (person_tpr,sum(person_tpr))
+        reps_done += len(person_tpr)
 
-    #     all_tpr.extend( person_tpr)
-    #     all_matches.extend(matches)
-    #     print ("TPR :", str(sum(all_tpr)/len(all_tpr)), "| Average time per rep:", str((rep_end-rep_start)/len(person_tpr)  ),"| Reps done:", reps_done, "Subset Indices:", str(matches))
-    # print ("Subsample size:", str(size_or_threshold), "| TPR :", str(sum(all_tpr)/len(all_tpr)) ,"| Reps done:",reps_done)
-    # print ("Matched Indicies over TPR:", set(all_matches), "With lockers: ", num_lockers)
+        all_tpr.extend( person_tpr)
+        all_matches.extend(matches)
+        print ("TPR :", str(sum(all_tpr)/len(all_tpr)), "| Average time per rep:", str((rep_end-rep_start)/len(person_tpr)  ),"| Reps done:", reps_done, "Subset Indices:", str(matches))
+    print ("Subsample size:", str(size_or_threshold), "| TPR :", str(sum(all_tpr)/len(all_tpr)) ,"| Reps done:",reps_done)
+    print ("Matched Indicies over TPR:", set(all_matches), "With lockers: ", num_lockers)
 
     # match_dict = {ind : 0 for ind in set(all_matches)}
     # for match in all_matches:
