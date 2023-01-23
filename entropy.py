@@ -321,6 +321,11 @@ def entropy(templates, ground_truth, selection_method,size_or_threshold,num_jobs
         entropy_list.append(2**(-1 * entropy))
         print(u,np.var(red))
         print ("Entropy Run #",r," Entropy:",entropy,"Mean of unlike dist:",u, "Mean of like:", np.mean(blue))
+
+        # plt.hist(red, bins=20)
+        # plt.show()
+        # plt.hist(blue, bins=20)
+        # plt.show()
         
     exp_ent = np.mean(entropy_list)
     avg_ent = -1 * math.log(exp_ent, 2)
