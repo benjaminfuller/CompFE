@@ -268,14 +268,14 @@ def entropy_helper(template,template_split,gt, gt_split):
     return blue_list,red_list
 
     
-def entropy(templates, ground_truth, selection_method,size_or_threshold,num_jobs=4,positions=[]):
+def entropy(templates, ground_truth, selection_method,size_or_threshold,num_jobs=4,positions=[],start=0):
     if len(positions) != 0:
         runs = len(positions)
     else: 
         runs = 10
     
     entropy_list = []
-    for r in range(runs):
+    for r in range(start,runs):
         if len(positions) == 0:
             if selection_method == 'complex':
                 print("Using Complex Sixia Sampling")
@@ -383,25 +383,30 @@ print("Finished reading Templates")
 
 if stopping_condition == 'size':
     print ("Generating positions with fixed size")   
-    if selection_method == 'complex':
-        print("Using Complex Sixia Sampling")
-        positions = sample_sixia_with_entropy(size_or_threshold,1024,num_lockers,confidence,alpha_param)    
-    else: 
-        print("Using Simple Sixia Sampling")
-        positions = sample_sixia(size_or_threshold,1024,num_lockers,confidence,alpha_param)  
+    # if selection_method == 'complex':
+    #     print("Using Complex Sixia Sampling")
+    #     positions = sample_sixia_with_entropy(size_or_threshold,1024,num_lockers,confidence,alpha_param)    
+    # else: 
+    #     print("Using Simple Sixia Sampling")
+    #     positions = sample_sixia(size_or_threshold,1024,num_lockers,confidence,alpha_param)  
     all_tpr = []
     all_matches = []
     reps_done = 0
     
-    with open("subsets.pkl",'wb') as f: 
-        f.write(pickle.dumps(positions)) #TODO
-        f.close()
+    # with open("subsets.pkl",'wb') as f: 
+    #     f.write(pickle.dumps(positions)) #TODO
+    #     f.close()
 
-    for subset in positions:
-        for index in subset:
-            if index in bad_list:
-                print("Bad",index,"found")
+    # for subset in positions:
+    #     for index in subset:
+    #         if index in bad_list:
+    #             print("Bad",index,"found")
     
+    with open("subsets.pkl", 'rb') as f:
+        positions = pickle.load(f)
+        f.close()
+    print(positions)
+
     templates_temp = templates
     ground_truth_temp = ground_truth
     print("Beginning Entropy Calculation")
@@ -413,7 +418,7 @@ if stopping_condition == 'size':
     print("Shape of Templates:", templates.shape)
     ground_truth = np.array(ground_truth)
     print("Shape of Ground Truths:",ground_truth.shape)
-    avg_entropy,entropy_list = entropy(templates,ground_truth,selection_method,size_or_threshold,num_jobs=num_cpus, positions=positions)
+    avg_entropy,entropy_list = entropy(templates,ground_truth,selection_method,size_or_threshold,num_jobs=num_cpus, positions=positions,start=144701)
     print("Finished Entropy Calculation")
     templates = templates_temp
     ground_truth = ground_truth_temp
