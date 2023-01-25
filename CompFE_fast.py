@@ -418,7 +418,7 @@ if stopping_condition == 'size':
     print("Shape of Templates:", templates.shape)
     ground_truth = np.array(ground_truth)
     print("Shape of Ground Truths:",ground_truth.shape)
-    avg_entropy,entropy_list = entropy(templates,ground_truth,selection_method,size_or_threshold,num_jobs=num_cpus, positions=positions,start=144701)
+    avg_entropy,entropy_list = entropy(templates,ground_truth,selection_method,size_or_threshold,num_jobs=num_cpus, positions=positions,start=260651)
     print("Finished Entropy Calculation")
     templates = templates_temp
     ground_truth = ground_truth_temp
