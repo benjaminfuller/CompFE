@@ -463,11 +463,11 @@ if stopping_condition == 'size':
 
     low_positions = []
     for item in low_entropies:
-        low_positions.append(item[0])
+        low_positions.append(positions[item[0]])
 
     random_positions = []
     for item in random_entropies:
-        random_positions.append(item[0])
+        random_positions.append(positions[item[0]])
 
     high_positions = np.array(high_positions)
 
