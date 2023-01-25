@@ -549,7 +549,7 @@ if stopping_condition == 'size':
 
         random_all_tpr.extend( person_tpr)
         random_all_matches.extend(matches)
-        print ("TPR :", str(sum(high_all_tpr)/len(random_all_tpr)), "| Average time per rep:", str((rep_end-rep_start)/len(person_tpr)  ),"| Reps done:", random_reps_done, "Subset Indices:", str(matches))
+        print ("TPR :", str(sum(high_all_tpr)/len(random_all_tpr)), "| Average time per rep:", str((rep_end-rep_start)/len(person_tpr)  ),"| Reps done:", random_reps_done)
     print ("Subsample size:", str(size_or_threshold), "| TPR :", str(sum(random_all_tpr)/len(random_all_tpr)) ,"| Reps done:",random_reps_done)
     print ("Matched Indicies over TPR:", set(random_all_matches), "With lockers: ", 250000)
 
