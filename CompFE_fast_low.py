@@ -501,57 +501,57 @@ if stopping_condition == 'size':
     # print ("Subsample size:", str(size_or_threshold), "| TPR :", str(sum(high_all_tpr)/len(high_all_tpr)) ,"| Reps done:",high_reps_done)
     # print ("Matched Indicies over TPR:", set(high_all_matches), "With lockers: ", 250000)
 
-    # print ("Starting low gen and rep for alpha", str(alpha_param), "Subset size",str(size_or_threshold),"and", str(250000),"subsets")
-    # for x in range(len(templates)):
-    #     templateNum = x
-    #     print("Staring gen (single threaded)")
-    #     gen_template = np.array(gen( np.array(templates[templateNum][0]),np.array(low_positions)))
-    #     print("Finished Gen")
-    #     person_tpr = []
-    #     print("Starting Rep")
-    #     rep_start = time.time()
-    #     matches = []
-    #     for y in range(1,len(templates[templateNum])):
-    #         temp_matches = rep(templates[templateNum][y], low_positions, gen_template,num_cpus)
-    #         matches.extend(temp_matches)
-    #         person_tpr.append(temp_matches != [])
-    #     rep_end = time.time()
-    #     print("Rep time:" ,rep_end-rep_start)
-
-    # #    print (person_tpr,sum(person_tpr))
-    #     low_reps_done += len(person_tpr)
-
-    #     low_all_tpr.extend( person_tpr)
-    #     low_all_matches.extend(matches)
-    #     print ("TPR :", str(sum(high_all_tpr)/len(low_all_tpr)), "| Average time per rep:", str((rep_end-rep_start)/len(person_tpr)  ),"| Reps done:", low_reps_done, "Subset Indices:", str(matches))
-    # print ("Subsample size:", str(size_or_threshold), "| TPR :", str(sum(low_all_tpr)/len(low_all_tpr)) ,"| Reps done:",low_reps_done)
-    # print ("Matched Indicies over TPR:", set(low_all_matches), "With lockers: ", 250000)
-
-    print ("Starting random gen and rep for alpha", str(alpha_param), "Subset size",str(size_or_threshold),"and", str(250000),"subsets")
+    print ("Starting low gen and rep for alpha", str(alpha_param), "Subset size",str(size_or_threshold),"and", str(250000),"subsets")
     for x in range(len(templates)):
         templateNum = x
         print("Staring gen (single threaded)")
-        gen_template = np.array(gen( np.array(templates[templateNum][0]),np.array(random_positions)))
+        gen_template = np.array(gen( np.array(templates[templateNum][0]),np.array(low_positions)))
         print("Finished Gen")
         person_tpr = []
         print("Starting Rep")
         rep_start = time.time()
         matches = []
         for y in range(1,len(templates[templateNum])):
-            temp_matches = rep(templates[templateNum][y], random_positions, gen_template,num_cpus)
+            temp_matches = rep(templates[templateNum][y], low_positions, gen_template,num_cpus)
             matches.extend(temp_matches)
             person_tpr.append(temp_matches != [])
         rep_end = time.time()
         print("Rep time:" ,rep_end-rep_start)
 
     #    print (person_tpr,sum(person_tpr))
-        random_reps_done += len(person_tpr)
+        low_reps_done += len(person_tpr)
 
-        random_all_tpr.extend( person_tpr)
-        random_all_matches.extend(matches)
-        print ("TPR :", str(sum(high_all_tpr)/len(random_all_tpr)), "| Average time per rep:", str((rep_end-rep_start)/len(person_tpr)  ),"| Reps done:", random_reps_done, "Subset Indices:", str(matches))
-    print ("Subsample size:", str(size_or_threshold), "| TPR :", str(sum(random_all_tpr)/len(random_all_tpr)) ,"| Reps done:",random_reps_done)
-    print ("Matched Indicies over TPR:", set(random_all_matches), "With lockers: ", 250000)
+        low_all_tpr.extend( person_tpr)
+        low_all_matches.extend(matches)
+        print ("TPR :", str(sum(high_all_tpr)/len(low_all_tpr)), "| Average time per rep:", str((rep_end-rep_start)/len(person_tpr)  ),"| Reps done:", low_reps_done, "Subset Indices:", str(matches))
+    print ("Subsample size:", str(size_or_threshold), "| TPR :", str(sum(low_all_tpr)/len(low_all_tpr)) ,"| Reps done:",low_reps_done)
+    print ("Matched Indicies over TPR:", set(low_all_matches), "With lockers: ", 250000)
+
+    # print ("Starting random gen and rep for alpha", str(alpha_param), "Subset size",str(size_or_threshold),"and", str(250000),"subsets")
+    # for x in range(len(templates)):
+    #     templateNum = x
+    #     print("Staring gen (single threaded)")
+    #     gen_template = np.array(gen( np.array(templates[templateNum][0]),np.array(random_positions)))
+    #     print("Finished Gen")
+    #     person_tpr = []
+    #     print("Starting Rep")
+    #     rep_start = time.time()
+    #     matches = []
+    #     for y in range(1,len(templates[templateNum])):
+    #         temp_matches = rep(templates[templateNum][y], random_positions, gen_template,num_cpus)
+    #         matches.extend(temp_matches)
+    #         person_tpr.append(temp_matches != [])
+    #     rep_end = time.time()
+    #     print("Rep time:" ,rep_end-rep_start)
+
+    # #    print (person_tpr,sum(person_tpr))
+    #     random_reps_done += len(person_tpr)
+
+    #     random_all_tpr.extend( person_tpr)
+    #     random_all_matches.extend(matches)
+    #     print ("TPR :", str(sum(high_all_tpr)/len(random_all_tpr)), "| Average time per rep:", str((rep_end-rep_start)/len(person_tpr)  ),"| Reps done:", random_reps_done, "Subset Indices:", str(matches))
+    # print ("Subsample size:", str(size_or_threshold), "| TPR :", str(sum(random_all_tpr)/len(random_all_tpr)) ,"| Reps done:",random_reps_done)
+    # print ("Matched Indicies over TPR:", set(random_all_matches), "With lockers: ", 250000)
 
     # print ("Starting gen and rep for alpha", str(alpha_param), "Subset size",str(size_or_threshold),"and", str(num_lockers),"subsets")
     # for x in range(len(templates)):
