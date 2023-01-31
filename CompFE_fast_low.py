@@ -452,7 +452,7 @@ if stopping_condition == 'size':
 
     entropies = entropy_list
     entropies.sort(key=lambda x: x[1])
-    high_entropies = entropies[:-200000]
+    high_entropies = entropies[:-250000]
     # low_entropies = entropies[:-50000]
     # random_entropies = random.sample(entropies, 250000)
     # print(len(high_entropies), len(low_entropies), len(random_entropies))
@@ -475,7 +475,7 @@ if stopping_condition == 'size':
 
     # random_positions = np.array(random_positions)
 
-    print ("Starting Low 100k gen and rep for alpha", str(alpha_param), "Subset size",str(size_or_threshold),"and", str(100000),"subsets")
+    print ("Starting Low 50k gen and rep for alpha", str(alpha_param), "Subset size",str(size_or_threshold),"and", str(50000),"subsets")
     for x in range(len(templates)):
         templateNum = x
         print("Staring gen (single threaded)")

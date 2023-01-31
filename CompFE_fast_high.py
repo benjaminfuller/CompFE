@@ -452,7 +452,7 @@ if stopping_condition == 'size':
 
     entropies = entropy_list
     entropies.sort(key=lambda x: x[1])
-    high_entropies = entropies[:-100000]
+    high_entropies = entropies[50000:]
     # low_entropies = entropies[:-50000]
     # random_entropies = random.sample(entropies, 250000)
     # print(len(high_entropies), len(low_entropies), len(random_entropies))
@@ -475,7 +475,7 @@ if stopping_condition == 'size':
 
     # random_positions = np.array(random_positions)
 
-    print ("Starting Low 200k gen and rep for alpha", str(alpha_param), "Subset size",str(size_or_threshold),"and", str(200000),"subsets")
+    print ("Starting high 50k gen and rep for alpha", str(alpha_param), "Subset size",str(size_or_threshold),"and", str(50000),"subsets")
     for x in range(len(templates)):
         templateNum = x
         print("Staring gen (single threaded)")
@@ -499,6 +499,7 @@ if stopping_condition == 'size':
         high_all_matches.extend(matches)
         print ("TPR :", str(sum(high_all_tpr)/len(high_all_tpr)), "| Average time per rep:", str((rep_end-rep_start)/len(person_tpr)  ),"| Reps done:", high_reps_done)
     print ("Subsample size:", str(size_or_threshold), "| TPR :", str(sum(high_all_tpr)/len(high_all_tpr)) ,"| Reps done:",high_reps_done)
+    print(high_entropies[0])
     # print ("Matched Indicies over TPR:", set(high_all_matches), "With lockers: ", 200000)
 
     # print ("Starting low gen and rep for alpha", str(alpha_param), "Subset size",str(size_or_threshold),"and", str(250000),"subsets")
