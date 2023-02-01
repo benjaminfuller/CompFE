@@ -452,7 +452,7 @@ if stopping_condition == 'size':
 
     entropies = entropy_list
     entropies.sort(key=lambda x: x[1])
-    high_entropies = entropies[50000:]
+    high_entropies = entropies[250000:]
     # low_entropies = entropies[:-50000]
     # random_entropies = random.sample(entropies, 250000)
     # print(len(high_entropies), len(low_entropies), len(random_entropies))
