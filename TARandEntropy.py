@@ -207,7 +207,8 @@ def entropy(templates, ground_truth, selection_method,size_or_threshold,num_jobs
 
         
         u = np.mean(red)
-        entropy = (u*(1-u))/np.var(red)
+        degrees_freedom = (u*(1-u))/np.var(red)
+        entropy = degrees_freedom * binary_entropy(u)
         entropy_list.append(2**(-1 * entropy))
         print ("Entropy Run #",r," Entropy:",entropy,"Mean of unlike dist:",u)
         
