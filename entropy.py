@@ -1,4 +1,3 @@
-from curses import pair_content
 import time
 import math
 from turtle import pos, position
@@ -13,6 +12,7 @@ from multiprocessing import Pool
 import numpy as np
 import multiprocessing as mp
 import matplotlib.pyplot as plt
+import pickle
 #np.random.seed(1337) # for reproducibility`
 
 ################################################################################
@@ -271,14 +271,14 @@ def entropy_helper(template,template_split,gt, gt_split):
     return blue_list,red_list
 
     
-def entropy(templates, ground_truth, selection_method,size_or_threshold,num_jobs=4,positions=[]):
+def entropy(templates, ground_truth, selection_method,size_or_threshold,num_jobs=4,positions=[],start=0,num_runs=10):
     if len(positions) != 0:
         runs = len(positions)
     else: 
         runs = 10
     
     entropy_list = []
-    for r in range(runs):
+    for r in range(start,start+num_runs):
         if len(positions) == 0:
             if selection_method == 'complex':
                 print("Using Complex Sixia Sampling")
@@ -349,6 +349,7 @@ size_or_threshold = int(sys.argv[3])
 selection_method = sys.argv[4]
 alpha_param = float(sys.argv[5])
 num_lockers = int(sys.argv[6])
+start = int(sys.argv[7])
 numbers = re.compile(r'(\d+)')
 cwd = os.getcwd()
 num_cpus = mp.cpu_count()
@@ -381,14 +382,10 @@ for x in range(len(num_classes)):
     ground_truth.extend(ground_truth_temp)
 print("Finished reading Templates")
 
-if stopping_condition == 'size':
-    print ("Generating positions with fixed size")   
-    if selection_method == 'complex':
-        print("Using Complex Sixia Sampling")
-        positions = sample_sixia_with_entropy(size_or_threshold,1024,num_lockers,confidence,alpha_param)    
-    else: 
-        print("Using Simple Sixia Sampling")
-        positions = sample_sixia(size_or_threshold,1024,num_lockers,confidence,alpha_param)  
+with open("f600ksubsets.pkl",'rb') as f: 
+    positions = pickle.load(f)
+    f.close()
+
     all_tpr = []
     all_matches = []
     reps_done = 0
@@ -405,5 +402,5 @@ templates = np.array([item for sublist in templates for item in sublist ])
 print("Shape of Templates:", templates.shape)
 ground_truth = np.array(ground_truth)
 print("Shape of Ground Truths:",ground_truth.shape)
-avg_entropy,entropy_list = entropy(templates,ground_truth,selection_method,size_or_threshold,num_jobs=num_cpus, positions=positions)
+avg_entropy,entropy_list = entropy(templates,ground_truth,selection_method,size_or_threshold,num_jobs=num_cpus, positions=positions, start=start, num_runs=10000)
 print("Finished Entropy Calculation")
