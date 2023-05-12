@@ -242,8 +242,7 @@ def subsample(templates,positions):
         for list in positions:
             new_subsample = [templates[x][index] for index in list]
             # print("Subsample:",new_subsample)
-        subsampled_array.append(new_subsample)
-    print("Returning from subsampling")
+        subsampled_array.append(new_subsample)    print("Returning from subsampling")
     return np.array(subsampled_array)
 
 def entropy_helper(template,template_split,gt, gt_split):
