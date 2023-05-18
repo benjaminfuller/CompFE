@@ -6,7 +6,7 @@ import csv
 p_same=[]
 p_diff=[]
 p_gap=[]
-with open('../PythonImpl/dense_0.205_57-75.txt', newline='') as csvfile:
+with open('../PythonImpl/confidence_672_70classes', newline='') as csvfile:
     confidence_info = csv.reader(csvfile, delimiter=' ', quotechar='|')
     
     for row in confidence_info:
