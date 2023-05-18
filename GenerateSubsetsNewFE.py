@@ -114,7 +114,7 @@ def sample_sixia_with_entropy(size, biometric_len, number_samples, confidence, a
 
 size_or_threshold = int(sys.argv[1]) # Subset size
 selection_method = sys.argv[2] # 'complex' or 'simple'
-alpha_param = int(sys.argv[3]) # Confidence Weight Parameter
+alpha_param = float(sys.argv[3]) # Confidence Weight Parameter
 num_lockers = int(sys.argv[4]) # number of subsets sampled
 outputfilename = sys.argv[5] + str(size_or_threshold) +  str(selection_method) + str(alpha_param) + str(num_lockers) #output file name
 numbers = re.compile(r'(\d+)')
@@ -126,7 +126,7 @@ print ("Folders: ",len(folder_list))
 num_classes = range(len(folder_list))
 
 print("Reading Confidence")
-confidence, bad_list = read_complex_conf(cwd + "/CompFE/PythonImpl/AuxiliaryFiles/confidence_train.txt")
+confidence, bad_list = read_complex_conf(cwd + "/CompFE/PythonImpl/AuxiliaryFiles/confidence_672_70classes.txt")
 
 if selection_method == 'complex':
     print("Generating Subsets Using Complex Sixia Sampling")
