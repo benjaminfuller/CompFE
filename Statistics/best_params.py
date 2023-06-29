@@ -14,13 +14,13 @@ ent_best_params_dict={}
 for ent in ent_levels:
     ent_best_params_dict[ent] = (0,0,0)
 
-with open('ent_tar.txt', newline='') as csvfile:
+with open('ent_tar_new.txt', newline='') as csvfile:
     tar_rates = csv.reader(csvfile, delimiter='\t', quotechar='|')
     next(tar_rates)
     for row in tar_rates:
         if len(row)>3:
             subset_size = int(row[0])
-            alpha = int(row[1])
+            alpha = float(row[1])
             ent = float(row[2])
             tar = float(row[3])
 
