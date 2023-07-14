@@ -232,9 +232,9 @@ def rep(template, positions, gen_template, num_jobs=32):
     return matches
 
 def subsample(templates,positions):
-    print("In subsampling")
-    print(templates.shape)
-    print(len(positions),len(positions[0]))
+    # print("In subsampling")
+    # print(templates.shape)
+    # print(len(positions),len(positions[0]))
     subsampled_array = []
     for x in range(templates.shape[0]):
         # print("Template:", x)
@@ -243,7 +243,7 @@ def subsample(templates,positions):
             new_subsample = [templates[x][index] for index in list]
             # print("Subsample:",new_subsample)
         subsampled_array.append(new_subsample)
-    print("Returning from subsampling")
+    # print("Returning from subsampling")
     return np.array(subsampled_array)
 
 def entropy_helper(template,template_split,gt, gt_split):
@@ -273,22 +273,22 @@ def entropy(templates, ground_truth,num_jobs=4,positions=[],start=0,num_runs=10)
     entropy_list = []
     for r in range(start,start+num_runs):
         
-        print("Subsampling Templates")
+        # print("Subsampling Templates")
         subsampled_templates = subsample(templates,positions[r:r+1])
         print(len(subsampled_templates), len(subsampled_templates[0]))
-        print("Finished Subsampling")
+        # print("Finished Subsampling")
         blue = []
         red = []
         i = 0
         print("Using",num_jobs,"cores for Entropy")
         number_jobs = num_jobs
 
-        print("Splitting templates and Ground Truths")
+        # print("Splitting templates and Ground Truths")
         templates_split = np.array(np.array_split(subsampled_templates, number_jobs),dtype=object)
         ground_truth_split = np.array(np.array_split(ground_truth, number_jobs),dtype=object)
-        print("Finished Split")
+        # print("Finished Split")
 
-        print("Searching for Matches")
+        # print("Searching for Matches")
         found_match = Parallel(n_jobs=number_jobs)(delayed(entropy_helper)
                                                    (subsampled_templates,templates_split[i],ground_truth,ground_truth_split[i])
                                                    for i in range(number_jobs))
@@ -297,15 +297,15 @@ def entropy(templates, ground_truth,num_jobs=4,positions=[],start=0,num_runs=10)
                 blue.extend(found_match[x][0])
                 red.extend(found_match[x][1])
 
-        print("Calculating Statistics")
+        # print("Calculating Statistics")
         u = np.mean(red)
         degrees_freedom = (u*(1-u))/np.var(red)
-        print("Adding to list")
+        # print("Adding to list")
 
         entropy = degrees_freedom * binary_entropy(u)
 
         entropy_list.append(2**(-1 * entropy))
-        print(u,np.var(red))
+        # print(u,np.var(red))
         print ("Entropy Run #",r," Entropy:",entropy,"Mean of unlike dist:",u, "Mean of like:", np.mean(blue))
 
         # plt.hist(red, bins=20)
@@ -326,7 +326,7 @@ def entropy(templates, ground_truth,num_jobs=4,positions=[],start=0,num_runs=10)
 ################################################################################
 
 # Command Line Usage:
-# python3 CompFE_fast.py [number of classes for TAR test] ['threshold' or 'size'] [subset size or entropy threshold] ['simple' or 'complex'] [alpha] [number of subsets]
+# python3 EntropyTestNewFE.py [subset size] [number of subsets] [filename] [subsets to test] [starting index]
 
 print(sys.argv)
 size_or_threshold = int(sys.argv[1]) # Subset size
@@ -338,14 +338,14 @@ numbers = re.compile(r'(\d+)')
 cwd = os.getcwd()
 num_cpus = mp.cpu_count()
 folder_list = sorted(glob.glob(cwd + "/CompFE/iris_best-entropy/*"),key=numericalSort)
-print (cwd)
+# print (cwd)
 CLASSES = len(folder_list)
 print ("Folders: ",len(folder_list))
 
 num_classes = range(len(folder_list))
-print(num_classes)
+# print(num_classes)
 
-print ("Reading templates")
+# print ("Reading templates")
 templates = []
 ground_truth = []
 
@@ -361,28 +361,29 @@ for x in range(len(num_classes)):
 
     templates.append(template_temp)
     ground_truth.extend(ground_truth_temp)
-print("Finished reading Templates")
+# print("Finished reading Templates")
 
-with open(filename + ".pkl", 'rb') as f:
+with open("subsets/"+ filename + ".pkl", 'rb') as f:
     positions = pickle.load(f)
     f.close()
 
-print("Finished reading positions")
+# print("Finished reading positions")
    
 # '''
 # 	Entropy Calculation
 # '''
-print("Beginning Entropy Calculation")
-templates = np.array([item for sublist in templates for item in sublist ])
-templates = templates[:5000]
-print("Shape of Templates:", templates.shape)
+# print("Beginning Entropy Calculation")
+templates = [item for sublist in templates for item in sublist ]
+random.shuffle(templates)
+templates = np.array(templates[:5000])
+# print("Shape of Templates:", templates.shape)
 ground_truth = np.array(ground_truth)
-print("Shape of Ground Truths:",ground_truth.shape)
+# print("Shape of Ground Truths:",ground_truth.shape)
 avg_entropy,entropy_list = entropy(templates,ground_truth,num_jobs=num_cpus, positions=positions, start=num_start, num_runs=num_testing)
-print("Finished Entropy Calculation")
+# print("Finished Entropy Calculation")
 
-outlist = [-1 * math.log(i,2) for i in entropy_list]
-print(outlist[:10])
+# outlist = [-1 * math.log(i,2) for i in entropy_list]
+# print(outlist[:10])
 
 with open(filename + str(num_start) +  "ents.pkl", 'wb') as f:
     f.write(pickle.dumps(positions))

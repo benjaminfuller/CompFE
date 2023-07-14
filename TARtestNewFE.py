@@ -375,7 +375,7 @@ all_tpr = []
 all_matches = []
 reps_done = 0
 
-with open(filename + ".pkl", 'rb') as f:
+with open("subsets/" + filename + ".pkl", 'rb') as f:
     positions = pickle.load(f)
     f.close()
 
@@ -405,6 +405,6 @@ for x in range(len(templates)):
     all_matches.extend(matches)
     print ("TPR :", str(sum(all_tpr)/len(all_tpr)), "| Average time per rep:", str((rep_end-rep_start)/len(person_tpr)  ),"| Reps done:", reps_done)
 print ("Subsample size:", str(size_or_threshold), "| TPR :", str(sum(all_tpr)/len(all_tpr)) ,"| Reps done:",reps_done)
-print ("Matched Indicies over TPR:", set(all_matches), "With lockers: ", num_lockers)
+# print ("Matched Indicies over TPR:", set(all_matches), "With lockers: ", num_lockers)
 
 print("Finished TAR test")
