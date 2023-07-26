@@ -22,28 +22,32 @@ with open('ent_tar_new.txt', newline='') as csvfile:
                 ent=[]
                 tar=[]
                 subset_dict[subset_size]=(ent,tar)
-            ent.append(float(row[2]))
-            tar.append(float(row[3]))
-            if alpha in alpha_dict:
-                ent, tar = alpha_dict[alpha]
-            else:
-                ent=[]
-                tar=[]
-                alpha_dict[alpha]=(ent,tar)
-            ent.append(float(row[2]))
-            tar.append(float(row[3]))
+            if float(row[2])!=0:
+                ent.append(float(row[2]))
+                tar.append(float(row[3]))
+                if alpha in alpha_dict:
+                    ent, tar = alpha_dict[alpha]
+                else:
+                    ent=[]
+                    tar=[]
+                    alpha_dict[alpha]=(ent,tar)
+                ent.append(float(row[2]))
+                tar.append(float(row[3]))
                                
-for key in subset_dict:
-    ent, tar = subset_dict[key]
-    plt.scatter(ent, tar, alpha=0.5, label="Subset Size = "+str(key))
+#for key in subset_dict:
+#    ent, tar = subset_dict[key]
+#    plt.scatter(ent, tar, alpha=0.5, label="Subset Size = "+str(key))
 
-#for key in alpha_dict:
-#    if key in [0,5,10,20,30]:
-#        ent, tar = alpha_dict[key]
-#        plt.scatter(ent, tar, alpha=0.5, label="Alpha = "+str(key))
-    
+for key in alpha_dict:
+    if key in [0,15]:
+        ent, tar = alpha_dict[key]
+        if key !=0:
+            plt.scatter(ent, tar, alpha=0.5, label="Alpha = "+str(key))
+        else:
+            plt.scatter(ent, tar, alpha=0.5, label="Uniform Sampling")
+            
 plt.xlabel("Minimum of Entropy of across 10 subsets")
 plt.legend()
 plt.ylabel("True Accept Rate")
-plt.title("Entropy and TAR across subset sizes and alpha parameters")
+plt.title("Entropy and TAR for uniform and alpha=15")
 plt.show()
