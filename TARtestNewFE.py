@@ -10,7 +10,15 @@ from matplotlib import pyplot as plt
 import numpy as np
 import multiprocessing as mp
 import pickle
+from hashlib import sha512
+
+from PythonImpl.FuzzyExtractor_1_parallel import FuzzyExtractor
+
+
 #np.random.seed(1337) # for reproducibility`
+
+
+
 
 ################################################################################
 #                      FUNCTION DEFINITIONS                                    #
@@ -339,15 +347,16 @@ def entropy(templates, ground_truth, selection_method,size_or_threshold,num_jobs
 # Command Line Usage:
 # python3 CompFE_fast.py [subset size or entropy threshold] [number of subsets] [filename for positions] 
 
+do_cryptography=1
+
 print(sys.argv)
 size_or_threshold = int(sys.argv[1]) # Subset size
 num_lockers = int(sys.argv[2]) # number of subsets sampled
 filename = sys.argv[3] 
 numbers = re.compile(r'(\d+)')
 cwd = os.getcwd()
-num_cpus = mp.cpu_count()
-folder_list = sorted(glob.glob(cwd + "/CompFE/iris_best-entropy/*"),key=numericalSort)
-print (cwd)
+num_cpus = 2*mp.cpu_count()
+folder_list = sorted(glob.glob(cwd + "/iris_best-entropy/*"),key=numericalSort)
 CLASSES = len(folder_list)
 print ("Folders: ",len(folder_list))
 num_classes = range(len(folder_list))
@@ -370,6 +379,7 @@ for x in range(len(num_classes)):
     ground_truth.extend(ground_truth_temp)
 print("Finished reading Templates")
 
+print("Length of templates "+str(len(templates)))
 
 all_tpr = []
 all_matches = []
@@ -382,28 +392,56 @@ with open("subsets/" + filename + ".pkl", 'rb') as f:
 print("Finished reading positions")
 
 print ("Starting gen and rep for Subset size",str(size_or_threshold),"and", str(num_lockers),"subsets")
+gen_time=[]
+rep_time=[]
 for x in range(len(templates)):
     templateNum = x
-    print("Staring gen (single threaded)")
-    gen_template = np.array(gen( np.array(templates[templateNum][0]),np.array(positions)))
-    print("Finished Gen")
-    person_tpr = []
-    print("Starting Rep")
-    rep_start = time.time()
-    matches = []
-    for y in range(1,len(templates[templateNum])):
-        temp_matches = rep(templates[templateNum][y], positions, gen_template,num_cpus)
-        matches.extend(temp_matches)
-        person_tpr.append(temp_matches != [])
-    rep_end = time.time()
-    print("Rep time:" ,rep_end-rep_start)
+    if templates[templateNum] is None or len(templates[templateNum]) < 2:
+        continue
 
+    matches = []
+    hamming_distance = []
+    if do_cryptography == 0:
+        gen_start=time.time()
+        gen_template = np.array(gen( np.array(templates[templateNum][0]),np.array(positions)))
+        gen_end=time.time()
+        print("Finished Gen")
+        gen_time.append(gen_end-gen_start)
+        person_tpr = []
+        print("Starting Rep")
+        rep_start = time.time()
+
+        for y in range(1,min(len(templates[templateNum]),10)):
+            hdist = np.count_nonzero([templates[templateNum][y][i]!=templates[templateNum][0][i] for i in range(len(templates[templateNum][0]))])
+            hamming_distance.append(hdist)
+            temp_matches = rep(templates[templateNum][y], positions, gen_template,num_cpus)
+            matches.extend(temp_matches)
+            person_tpr.append(temp_matches != [])
+        rep_end = time.time()
+        rep_time.append(rep_end-rep_start)
+    else:
+        gen_start = time.time()
+        fuzzext = FuzzyExtractor(positions=np.array(positions))
+        (r, encrypted_lockers, seeds) = fuzzext.gen(templates[templateNum][0], locker_size=size_or_threshold, lockers=num_lockers)
+        gen_end = time.time()
+        gen_time.append(gen_end-gen_start)
+        person_tpr = []
+        for y in range(1,len(templates[templateNum])):
+            rep_start = time.time()
+            hdist = np.count_nonzero([templates[templateNum][y][i]!=templates[templateNum][0][i] for i in range(len(templates[templateNum][0]))])
+            hamming_distance.append(hdist)
+            temp_matches = fuzzext.rep(templates[templateNum][y], encrypted_lockers, seeds, num_processes=1)
+            rep_end = time.time()
+            rep_time.append(rep_end-rep_start)
+            person_tpr.append(temp_matches!=-1)
+            matches.append(temp_matches)
 
     reps_done += len(person_tpr)
 
-    all_tpr.extend( person_tpr)
+    all_tpr.extend(person_tpr)
     all_matches.extend(matches)
-    print ("TPR :", str(sum(all_tpr)/len(all_tpr)), "| Average time per rep:", str((rep_end-rep_start)/len(person_tpr)  ),"| Reps done:", reps_done)
+    print(matches)
+    print ("TPR :", str(sum(all_tpr)/len(all_tpr)), "| Average time per rep:", str((rep_end-rep_start)/len(person_tpr)  ),"| Reps done:", reps_done,"| Avg Hamming:",str(sum(hamming_distance)/len(hamming_distance)))
 print ("Subsample size:", str(size_or_threshold), "| TPR :", str(sum(all_tpr)/len(all_tpr)) ,"| Reps done:",reps_done)
 # print ("Matched Indicies over TPR:", set(all_matches), "With lockers: ", num_lockers)
 

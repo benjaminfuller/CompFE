@@ -7,13 +7,15 @@ import random
 import string
 import time
 from hashlib import sha512
+from joblib import Parallel, delayed
 
 
 class FuzzyExtractor:
 
-    def __init__(self, hash=sha512, selection_method="Uniform"):
+    def __init__(self, positions, hash=sha512, selection_method="Uniform", ):
         self.hash = hash
         self.selection_method=selection_method
+        self.positions=positions
 
     #TODO Haven't converted this to Python3.  Current implementation doesn't require
     # confidence information so we'll leave it alone for now
@@ -82,18 +84,21 @@ class FuzzyExtractor:
 
 
         p = []
+        encrypted_lockers = []
         positions = None
-        if self.selection_method == "Uniform":
-            positions = self.sample_uniform(locker_size, biometric_len=len(bits), number_samples=lockers, confidence=confidence)
-        if self.selection_method == "Smart":
-            positions = self.sample_sixia(locker_size, biometric_len=len(bits), number_samples=lockers, confidence=confidence)
+        if self.positions is None:
+            if self.selection_method == "Uniform":
+                self.positions = self.sample_uniform(locker_size, biometric_len=len(bits), number_samples=lockers, confidence=confidence)
+            if self.selection_method == "Smart":
+                self.positions = self.sample_sixia(locker_size, biometric_len=len(bits), number_samples=lockers, confidence=confidence)
+        if len(self.positions) < lockers:
+            raise Exception("Not enough subsets provided")
         for x in range(lockers):
-            v_i = np.array([bits[y] for y in positions[x]])
+            v_i = np.array([bits[y] for y in self.positions[x]])
             seed = seeds[x]
-            h = bytearray(hmac.new(seed, v_i, self.hash).digest())
-            c_i = self.xor(check, h)
-            p.append((c_i, positions[x], seed))
-        return r, p
+            h = bytearray(hmac.new(bytearray(b'11111'), v_i, self.hash).digest())
+            encrypted_lockers.append(FuzzyExtractor.xor(check, h))
+        return r, encrypted_lockers, seeds
 
     def confidence_range(self, confidence, bits):
         indeces = []
@@ -103,49 +108,34 @@ class FuzzyExtractor:
                 indeces.append(x)
         return np.delete(bits, indeces)
 
-    def rep(self, bits, p, num_processes=1):
-        finished = multiprocessing.Array('b', False)
-        split = np.array_split(p, num_processes)
-        finished = multiprocessing.Manager().list(
-            [None for x in range(num_processes)])
+    def rep(self, bits, encrypted_lockers, seeds, num_processes=1):
+        split_lockers = np.array_split(encrypted_lockers, num_processes)
+        split_seeds = np.array_split(seeds, num_processes)
+        split_positions = np.array_split(self.positions, num_processes)
         processes = []
-        for x in range(num_processes):
-            p = multiprocessing.Process(
-                target=self.rep_process, args=(bits, split[x], finished, x))
-            processes.append(p)
-            p.start()
-        for p in processes:
-            p.join()
-        if any(finished):
-            print("Rep succeeded")
-            return next(item for item in finished if item is not None)
-        print("Rep failed")
-        return None
+        found_match = Parallel(n_jobs=num_processes)(delayed(FuzzyExtractor.rep_process)
+                                                   (bits, split_lockers[i], split_seeds[i], split_positions[i], self.hash, i)
+                                                   for i in range(num_processes))
+        return found_match[0]
 
-    def rep_process(self, bits, p, finished, process_id):
-        counter = 0
-   #     print("Rep processing with "+str(process_id))
-        for c_i, positions, seed in p:
-            v_i = np.array([bits[x] for x in positions])
-            h = bytearray(hmac.new(seed, v_i, self.hash).digest())
-            res = self.xor(c_i, h)
-            keyLen = int(len(res)/2)
-            if self.check_result(res):
-                finished[process_id] = res[keyLen:]
-                return
-            counter += 1
-            if counter == 1000:
-  #              print(str(process_id)+" resetting counter")
-                if(not any(finished)):
-                    counter = 0
-                else:
-                    return
+    @staticmethod
+    def rep_process(bits, lockers, seeds, positions, hash, process_id):
+        for i in range(len(lockers)):
+            v_i = np.array([bits[x] for x in positions[i]])
+            h = bytearray(hmac.new(bytearray(b'11111'), v_i, hash).digest())
+            res = FuzzyExtractor.xor(lockers[i], h)
+            if FuzzyExtractor.check_result(res):
+                return i
+        return -1
 
-    def check_result(self, res):
+
+    @staticmethod
+    def check_result(res):
         padLen = int(len(res)-len(res)/2)
         return all(v == 0 for v in res[:padLen])
 
-    def xor(self, b1, b2):
+    @staticmethod
+    def xor(b1, b2):
         return bytearray([x ^ y for x, y in zip(b1, b2)])
 
     def generate_sample(self, length=0, size=32):
