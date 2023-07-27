@@ -112,14 +112,18 @@ class FuzzyExtractor:
         split_lockers = np.array_split(encrypted_lockers, num_processes)
         split_seeds = np.array_split(seeds, num_processes)
         split_positions = np.array_split(self.positions, num_processes)
-        processes = []
-        found_match = Parallel(n_jobs=num_processes)(delayed(FuzzyExtractor.rep_process)
-                                                   (bits, split_lockers[i], split_seeds[i], split_positions[i], self.hash, i)
-                                                   for i in range(num_processes))
-        return found_match[0]
+        with multiprocessing.Pool(processes=num_processes) as pool:
+            found_match = pool.map(FuzzyExtractor.rep_process, [(bits, split_lockers[i], split_seeds[i], split_positions[i], self.hash, i)
+                                                       for i in range(num_processes)])
+
+        for match in found_match:
+            if match !=-1:
+                return match
+        return -1
 
     @staticmethod
-    def rep_process(bits, lockers, seeds, positions, hash, process_id):
+    def rep_process(args):
+        (bits, lockers, seeds, positions, hash, process_id) = args
         for i in range(len(lockers)):
             v_i = np.array([bits[x] for x in positions[i]])
             h = bytearray(hmac.new(bytearray(b'11111'), v_i, hash).digest())
@@ -155,6 +159,7 @@ def read(path):
 
 
 if __name__ == '__main__':
+    freeze_support()
     f1 = read("tests/test_files/test.bin")
     f2 = read("tests/test_files/same.bin")
     f3 = read("tests/test_files/diff.bin")
