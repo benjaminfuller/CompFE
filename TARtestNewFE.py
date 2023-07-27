@@ -426,7 +426,7 @@ for x in range(len(templates)):
         gen_end = time.time()
         gen_time.append(gen_end-gen_start)
         person_tpr = []
-        for y in range(1,len(templates[templateNum])):
+        for y in range(1,min(len(templates[templateNum]), 10)):
             rep_start = time.time()
             hdist = np.count_nonzero([templates[templateNum][y][i]!=templates[templateNum][0][i] for i in range(len(templates[templateNum][0]))])
             hamming_distance.append(hdist)
@@ -441,8 +441,8 @@ for x in range(len(templates)):
     all_tpr.extend(person_tpr)
     all_matches.extend(matches)
     print(matches)
-    print ("TPR :", str(sum(all_tpr)/len(all_tpr)), "| Average time per rep:", str((rep_end-rep_start)/len(person_tpr)  ),"| Reps done:", reps_done,"| Avg Hamming:",str(sum(hamming_distance)/len(hamming_distance)))
-print ("Subsample size:", str(size_or_threshold), "| TPR :", str(sum(all_tpr)/len(all_tpr)) ,"| Reps done:",reps_done)
+    print ("TPR :", str(sum(person_tpr)/len(person_tpr)),"| Reps done:", reps_done,"| Avg Hamming:",str(sum(hamming_distance)/len(hamming_distance)))
+print ("Subsample size:", str(size_or_threshold), "| TPR :", str(sum(all_tpr)/len(all_tpr)) ,"| Reps done:",reps_done, "| Average time per rep:", str(sum(rep_time)/len(rep_time)))
 # print ("Matched Indicies over TPR:", set(all_matches), "With lockers: ", num_lockers)
 
 print("Finished TAR test")
