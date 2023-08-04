@@ -79,7 +79,7 @@ def gen(template,positions):
         ret_value.append(v_i)
     return ret_value
 
-def sample_sixia(size, biometric_len, number_samples, confidence, alpha_param):
+def sample_alpha(size, biometric_len, number_samples, confidence, alpha_param):
     bad_list = [28, 200, 503, 754]
     if confidence is None:
         print("Can't run Smart sampling without confidence, calling uniform")
@@ -105,7 +105,7 @@ def sample_sixia(size, biometric_len, number_samples, confidence, alpha_param):
         sample_array.append(dedup_indices)
     return np.array(sample_array)
 
-def sample_sixia_entropy_threshold(size, biometric_len, number_samples, confidence, alpha_param, threshold):
+def sample_alpha_entropy_threshold(size, biometric_len, number_samples, confidence, alpha_param, threshold):
     if confidence is None:
         print("No confidence file given, cannot estimate entropy. Defaulting to set size subset uniform sampling.")
         return sample_uniform(size, biometric_len, number_samples, confidence=None)
@@ -142,7 +142,7 @@ def sample_sixia_entropy_threshold(size, biometric_len, number_samples, confiden
 
 
 # Current Working Project
-def sample_sixia_with_entropy(size, biometric_len, number_samples, confidence, alpha_param):
+def sample_alpha_with_entropy(size, biometric_len, number_samples, confidence, alpha_param):
     bad_list = [28, 200, 503, 754]
     if confidence is None:
         print("Can't run Smart sampling without confidence, calling uniform")
@@ -166,7 +166,7 @@ def sample_sixia_with_entropy(size, biometric_len, number_samples, confidence, a
         sample_array.append(dedup_indices)
     return np.array(sample_array)
 
-def sample_sixia_with_entropy_entropy_threshold(size, biometric_len, number_samples, confidence, alpha_param, threshold):
+def sample_alpha_with_entropy_entropy_threshold(size, biometric_len, number_samples, confidence, alpha_param, threshold):
     if confidence is None:
         print("No confidence file given, cannot estimate entropy. Defaulting to set size subset uniform sampling.")
         return sample_uniform(size, biometric_len, number_samples, confidence=None)

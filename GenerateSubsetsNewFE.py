@@ -55,7 +55,7 @@ def gen(template,positions):
         ret_value.append(v_i)
     return ret_value
 
-def sample_sixia(size, biometric_len, number_samples, confidence, alpha_param):
+def sample_alpha(size, biometric_len, number_samples, confidence, alpha_param):
     bad_list = [28, 200, 503, 754]
     if confidence is None:
         print("Can't run Smart sampling without confidence, calling uniform")
@@ -81,7 +81,7 @@ def sample_sixia(size, biometric_len, number_samples, confidence, alpha_param):
         sample_array.append(dedup_indices)
     return np.array(sample_array)
 
-def sample_sixia_with_entropy(size, biometric_len, number_samples, confidence, alpha_param):
+def sample_alpha_with_entropy(size, biometric_len, number_samples, confidence, alpha_param):
     bad_list = [28, 200, 754]
     if confidence is None:
         print("Can't run Smart sampling without confidence, calling uniform")
@@ -129,11 +129,11 @@ print("Reading Confidence")
 confidence, bad_list = read_complex_conf(cwd + "/CompFE/PythonImpl/AuxiliaryFiles/confidence_672_70classes.txt")
 
 if selection_method == 'complex':
-    print("Generating Subsets Using Complex Sixia Sampling")
-    positions = sample_sixia_with_entropy(size_or_threshold,1024,num_lockers,confidence,alpha_param)     
+    print("Generating Subsets Using Complex Alpha Sampling")
+    positions = sample_alpha_with_entropy(size_or_threshold,1024,num_lockers,confidence,alpha_param)     
 elif selection_method == 'simple':
-    print("Generating Subsets Using Simple Sixia Sampling")
-    positions = sample_sixia(size_or_threshold,1024,num_lockers,confidence,alpha_param)
+    print("Generating Subsets Using Simple Alpha Sampling")
+    positions = sample_alpha(size_or_threshold,1024,num_lockers,confidence,alpha_param)
 
 with open(outputfilename + ".pkl",'wb') as f: 
     f.write(pickle.dumps(positions))

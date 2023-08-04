@@ -90,7 +90,7 @@ def gen(template,positions):
         ret_value.append(v_i)
     return ret_value
 
-def sample_sixia(size, biometric_len, number_samples, confidence, alpha_param):
+def sample_alpha(size, biometric_len, number_samples, confidence, alpha_param):
     bad_list = [28, 200, 503, 754]
     if confidence is None:
         print("Can't run Smart sampling without confidence, calling uniform")
@@ -116,7 +116,7 @@ def sample_sixia(size, biometric_len, number_samples, confidence, alpha_param):
         sample_array.append(dedup_indices)
     return np.array(sample_array)
 
-def sample_sixia_entropy_threshold(size, biometric_len, number_samples, confidence, alpha_param, threshold):
+def sample_alpha_entropy_threshold(size, biometric_len, number_samples, confidence, alpha_param, threshold):
     if confidence is None:
         print("No confidence file given, cannot estimate entropy. Defaulting to set size subset uniform sampling.")
         return sample_uniform(size, biometric_len, number_samples, confidence=None)
@@ -153,7 +153,7 @@ def sample_sixia_entropy_threshold(size, biometric_len, number_samples, confiden
 
 
 # Current Working Project
-def sample_sixia_with_entropy(size, biometric_len, number_samples, confidence, alpha_param):
+def sample_alpha_with_entropy(size, biometric_len, number_samples, confidence, alpha_param):
     bad_list = [28, 200, 503, 754]
     if confidence is None:
         print("Can't run Smart sampling without confidence, calling uniform")
@@ -177,7 +177,7 @@ def sample_sixia_with_entropy(size, biometric_len, number_samples, confidence, a
         sample_array.append(dedup_indices)
     return np.array(sample_array)
 
-def sample_sixia_with_entropy_entropy_threshold(size, biometric_len, number_samples, confidence, alpha_param, threshold):
+def sample_alpha_with_entropy_entropy_threshold(size, biometric_len, number_samples, confidence, alpha_param, threshold):
     if confidence is None:
         print("No confidence file given, cannot estimate entropy. Defaulting to set size subset uniform sampling.")
         return sample_uniform(size, biometric_len, number_samples, confidence=None)
@@ -289,11 +289,11 @@ def entropy(templates, ground_truth, selection_method,size_or_threshold,num_jobs
     for r in range(start,runs):
         if len(positions) == 0:
             if selection_method == 'complex':
-                print("Using Complex Sixia Sampling")
-                positions = sample_sixia_with_entropy(size_or_threshold,1024,1,confidence,alpha_param)    
+                print("Using Complex Alpha Sampling")
+                positions = sample_alpha_with_entropy(size_or_threshold,1024,1,confidence,alpha_param)    
             else: 
-                print("Using Simple Sixia Sampling")
-                positions = sample_sixia(size_or_threshold,1024,1,confidence,alpha_param)  
+                print("Using Simple Alpha Sampling")
+                positions = sample_alpha(size_or_threshold,1024,1,confidence,alpha_param)  
 
         print("Subsampling Templates")
         subsampled_templates = subsample(templates,positions[r:r+1])
