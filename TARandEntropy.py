@@ -63,7 +63,7 @@ def gen(template,positions):
         ret_value.append(v_i)
     return ret_value
 
-def sample_sixia(size, biometric_len, number_samples, confidence, alpha_param):
+def sample_alpha(size, biometric_len, number_samples, confidence, alpha_param):
     bad_list = [28, 200, 503, 754]
     if confidence is None:
         print("Can't run Smart sampling without confidence, calling uniform")
@@ -88,7 +88,7 @@ def sample_sixia(size, biometric_len, number_samples, confidence, alpha_param):
     return np.array(sample_array)
 
 # Current Working Project
-def sample_sixia_with_entropy(size, biometric_len, number_samples, confidence, alpha_param):
+def sample_alpha_with_entropy(size, biometric_len, number_samples, confidence, alpha_param):
     bad_list = [28, 200, 503, 754]
     if confidence is None:
         print("Can't run Smart sampling without confidence, calling uniform")
@@ -178,11 +178,11 @@ def entropy(templates, ground_truth, selection_method,size_or_threshold,num_jobs
     entropy_list = []
     for r in range(runs):
         if selection_method == 'complex':
-            print("Using Complex Sixia Sampling")
-            positions = sample_sixia_with_entropy(size_or_threshold,1024,1,confidence,alpha_param)    
+            print("Using Complex Alpha Sampling")
+            positions = sample_alpha_with_entropy(size_or_threshold,1024,1,confidence,alpha_param)    
         else: 
-            print("Using Simple Sixia Sampling")
-            positions = sample_sixia(size_or_threshold,1024,1,confidence,alpha_param)  
+            print("Using Simple Alpha Sampling")
+            positions = sample_alpha(size_or_threshold,1024,1,confidence,alpha_param)  
 
         subsampled_templates = subsample(templates,positions)
         
@@ -261,11 +261,11 @@ for x in range(len(num_classes)):
 print("Finihsed reading Templates")
  
 if selection_method == 'complex':
-    print("Using Complex Sixia Sampling")
-    positions = sample_sixia_with_entropy(size_or_threshold,1024,num_lockers,confidence,alpha_param)    
+    print("Using Complex Alpha Sampling")
+    positions = sample_alpha_with_entropy(size_or_threshold,1024,num_lockers,confidence,alpha_param)    
 else: 
-    print("Using Simple Sixia Sampling")
-    positions = sample_sixia(size_or_threshold,1024,num_lockers,confidence,alpha_param)  
+    print("Using Simple Alpha Sampling")
+    positions = sample_alpha(size_or_threshold,1024,num_lockers,confidence,alpha_param)  
 all_tpr = []
 reps_done = 0
 print ("Starting gen and rep for alpha", str(alpha_param), "Subset size",str(size_or_threshold),"and", str(num_lockers),"subsets")

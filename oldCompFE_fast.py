@@ -136,7 +136,7 @@ for x in range(len(num_classes)):
         template_temp.append(ret_template)
     templates.append(template_temp)
 
-def sample_sixia_with_entropy(size, biometric_len, number_samples, confidence, alpha_param):
+def sample_alpha_with_entropy(size, biometric_len, number_samples, confidence, alpha_param):
         if confidence is None:
             print("Can't run Smart sampling without confidence, calling uniform")
             return sample_uniform(size, biometric_len, number_samples, confidence)
@@ -165,7 +165,7 @@ def sample_sixia_with_entropy(size, biometric_len, number_samples, confidence, a
 for k in range(len(subsample_list)):
     print ("Generating positions")
 #    positions = sample_uniform(subsample_list[k],1024,num_lockers)    
-    positions = sample_sixia_with_entropy(subsample_list[k],1024,num_lockers,confidence,alphas[k])       
+    positions = sample_alpha_with_entropy(subsample_list[k],1024,num_lockers,confidence,alphas[k])       
 
 
     import multiprocessing as mp
