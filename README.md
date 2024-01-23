@@ -12,7 +12,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 Files:
 * bh_iris.ipynb Trains feature extractor
-* PythonImpl/FuzzyExtractor.py and FuzzyExtractorparallel.py legacy implementation of Canetti et al. fuzzy extractor sample-then-lock from https://eprint.iacr.org/2014/243
+* PythonImpl/FuzzyExtractor.py legacy implementation of Canetti et al. fuzzy extractor sample-then-lock from https://eprint.iacr.org/2014/243
 * PythonImpl/RPISetDifference.py implementation of set difference construction from https://eprint.iacr.org/2016/1100
 * Statistics folder is used to understand quality of zeta sampling algorithm.
 * subsets contains selected subsets for mid and high security parameters.
