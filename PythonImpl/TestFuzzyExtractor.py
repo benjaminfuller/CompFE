@@ -1,4 +1,4 @@
-from FuzzyExtractor_1_parallel import FuzzyExtractor
+from FuzzyExtractor import FuzzyExtractor
 import cProfile
 import json
 import unittest
