@@ -1,0 +1,6 @@
+.DS_Store
+nd_dataset.pkl
+params.pkl
+iris_right_all_dense_0.205_57-75_1024_folders
+iris_best-entropy
+excluded_classes
