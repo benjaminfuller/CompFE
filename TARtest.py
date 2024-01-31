@@ -352,16 +352,16 @@ def entropy(templates, ground_truth, selection_method,size_or_threshold,num_jobs
 if __name__ == '__main__':
     freeze_support()
 
-    do_cryptography=1
+    do_cryptography=0
     print(sys.argv)
     size_or_threshold = int(sys.argv[1]) # Subset size
     num_lockers = int(sys.argv[2]) # number of subsets sampled
     filename = sys.argv[3]
+    feature_vector_folder = sys.argv[4]
     numbers = re.compile(r'(\d+)')
     cwd = os.getcwd()
     num_cpus = 2*mp.cpu_count()
-    folder_list = sorted(glob.glob(cwd + "<Enter your feature vector folder here>"),key=numericalSort)
-    folder_list="iris_best_entropy"
+    folder_list = sorted(glob.glob(cwd + "/"+feature_vector_folder+"/*"),key=numericalSort)
     CLASSES = len(folder_list)
     print ("Folders: ",len(folder_list))
     num_classes = range(len(folder_list))
@@ -399,8 +399,10 @@ if __name__ == '__main__':
     print ("Starting gen and rep for Subset size",str(size_or_threshold),"and", str(num_lockers),"subsets")
     gen_time=[]
     rep_time=[]
+    print(len(templates))
     for x in range(min(len(templates),40)):
         templateNum = x
+        print(len(templates[templateNum]))
         if templates[templateNum] is None or len(templates[templateNum]) < 2:
             continue
 
@@ -442,6 +444,7 @@ if __name__ == '__main__':
                 matches.append(temp_matches)
 
         reps_done += len(person_tpr)
+        print("Number of reps done "+str(reps_done))
 
         all_tpr.extend(person_tpr)
         all_matches.extend(matches)

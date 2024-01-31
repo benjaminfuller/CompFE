@@ -334,10 +334,11 @@ num_lockers = int(sys.argv[2]) # number of subsets sampled
 filename = sys.argv[3]
 num_testing = int(sys.argv[4]) # number of subsets to test
 num_start = int(sys.argv[5]) # Index of positions to start at
+feature_vector_folder = sys.argv[6]
 numbers = re.compile(r'(\d+)')
 cwd = os.getcwd()
 num_cpus = mp.cpu_count()
-folder_list = sorted(glob.glob(cwd + "<Enter your feature vector folder here>"),key=numericalSort)
+folder_list = sorted(glob.glob(cwd + "/"+feature_vector_folder+"/*"),key=numericalSort)
 # print (cwd)
 CLASSES = len(folder_list)
 print ("Folders: ",len(folder_list))
@@ -356,8 +357,9 @@ for x in range(len(num_classes)):
     template_list = glob.glob(folder_list[num_classes[x]] + "/*")
     for y in range(len(template_list)):
         ret_template = np.array(read_fvector(template_list[y]))
-        template_temp.append(ret_template)
-        ground_truth_temp.append([x,y])
+        if ret_template.ndim != 0:
+            template_temp.append(ret_template)
+            ground_truth_temp.append([x,y])
 
     templates.append(template_temp)
     ground_truth.extend(ground_truth_temp)
@@ -374,6 +376,12 @@ with open("subsets/"+ filename + ".pkl", 'rb') as f:
 # '''
 # print("Beginning Entropy Calculation")
 templates = [item for sublist in templates for item in sublist ]
+for y in range(len(templates)):
+    try:
+        len(templates[y])
+    except TypeError:
+        print(y)
+
 random.shuffle(templates)
 templates = np.array(templates[:5000])
 # print("Shape of Templates:", templates.shape)
