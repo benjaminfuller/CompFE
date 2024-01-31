@@ -15,7 +15,7 @@ import pickle
 from hashlib import sha512
 from statistics import variance
 
-from PythonImpl.FuzzyExtractor_1_parallel import FuzzyExtractor
+from PythonImpl.FuzzyExtractor import FuzzyExtractor
 
 
 #np.random.seed(1337) # for reproducibility`
@@ -361,6 +361,7 @@ if __name__ == '__main__':
     cwd = os.getcwd()
     num_cpus = 2*mp.cpu_count()
     folder_list = sorted(glob.glob(cwd + "<Enter your feature vector folder here>"),key=numericalSort)
+    folder_list="iris_best_entropy"
     CLASSES = len(folder_list)
     print ("Folders: ",len(folder_list))
     num_classes = range(len(folder_list))
