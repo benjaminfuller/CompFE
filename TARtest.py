@@ -15,7 +15,7 @@ import pickle
 from hashlib import sha512
 from statistics import variance
 
-from PythonImpl.FuzzyExtractor_1_parallel import FuzzyExtractor
+from PythonImpl.FuzzyExtractor import FuzzyExtractor
 
 
 #np.random.seed(1337) # for reproducibility`
@@ -352,32 +352,59 @@ def entropy(templates, ground_truth, selection_method,size_or_threshold,num_jobs
 if __name__ == '__main__':
     freeze_support()
 
-    do_cryptography=1
-    print(sys.argv)
+    do_cryptography=0
     size_or_threshold = int(sys.argv[1]) # Subset size
     num_lockers = int(sys.argv[2]) # number of subsets sampled
     filename = sys.argv[3]
+    number_to_group = int(sys.argv[4])
     numbers = re.compile(r'(\d+)')
     cwd = os.getcwd()
     num_cpus = 2*mp.cpu_count()
-    folder_list = sorted(glob.glob(cwd + "<Enter your feature vector folder here>"),key=numericalSort)
+    folder_list = sorted(glob.glob(cwd + "/iris_best-entropy/*"),key=numericalSort)
     CLASSES = len(folder_list)
-    print ("Folders: ",len(folder_list))
+    # print ("Folders: ",len(folder_list))
     num_classes = range(len(folder_list))
 
     print ("Reading templates")
     templates = []
     ground_truth = []
-
+    dimension=1024
     for x in range(len(num_classes)):
         template_temp = []
         ground_truth_temp = []
 
         template_list = glob.glob(folder_list[num_classes[x]] + "/*")
-        for y in range(len(template_list)):
-            ret_template = np.array(read_fvector(template_list[y]))
-            template_temp.append(ret_template)
-            ground_truth_temp.append([x,y])
+        if len(template_list)<=number_to_group+1:
+            continue
+
+
+        ret_template = np.array(read_fvector(template_list[0]))
+        if ret_template.size !=dimension:
+            continue
+        template_temp.append(ret_template)
+        ground_truth_temp.append([x, 0])
+        for y in range(math.floor((len(template_list)-1)/number_to_group)):
+            exclude_iteration = 0
+            ret_template_list = [0 for i in range(number_to_group)]
+            for i in range(number_to_group):
+                ret_template_list[i] = np.array(read_fvector(template_list[y*number_to_group+i+1]))
+                if ret_template_list[i].ndim == 0:
+                    exclude_iteration = 1
+            ret_template = np.array([0 for i in range(dimension)])
+            # print(ret_template_list)
+            if exclude_iteration == 0:
+                for i in range(dimension):
+                    count = 0
+                    for j in range(number_to_group):
+                        count = count+ret_template_list[j][i]
+                    if count > number_to_group/2:
+                        ret_template[i]=1
+                    # print(ret_template)
+                    # exit(1)
+                # ret_template = np.array(read_fvector(template_list[y+i])) for i in [number_to_group]
+                # print(ret_template)
+                template_temp.append(ret_template)
+                ground_truth_temp.append([x, y])
 
         templates.append(template_temp)
         ground_truth.extend(ground_truth_temp)
@@ -398,7 +425,9 @@ if __name__ == '__main__':
     print ("Starting gen and rep for Subset size",str(size_or_threshold),"and", str(num_lockers),"subsets")
     gen_time=[]
     rep_time=[]
-    for x in range(min(len(templates),40)):
+    num_attempts = 0
+    num_successes = 0
+    for x in range(len(templates)):
         templateNum = x
         if templates[templateNum] is None or len(templates[templateNum]) < 2:
             continue
@@ -409,18 +438,21 @@ if __name__ == '__main__':
             gen_start=time.time()
             gen_template = np.array(gen( np.array(templates[templateNum][0]),np.array(positions)))
             gen_end=time.time()
-            print("Finished Gen")
+            # print("Finished Gen")
             gen_time.append(gen_end-gen_start)
             person_tpr = []
-            print("Starting Rep")
+            # print("Starting Rep")
             rep_start = time.time()
 
             for y in range(1,min(len(templates[templateNum]),11)):
+                num_attempts= num_attempts+1
                 hdist = np.count_nonzero([templates[templateNum][y][i]!=templates[templateNum][0][i] for i in range(len(templates[templateNum][0]))])
                 hamming_distance.append(hdist)
                 temp_matches = rep(templates[templateNum][y], positions, gen_template,2*num_cpus)
                 matches.extend(temp_matches)
                 person_tpr.append(temp_matches != [])
+                if(temp_matches!=[]):
+                    num_successes= num_successes+1
             rep_end = time.time()
             rep_time.append(rep_end-rep_start)
         else:
@@ -440,15 +472,18 @@ if __name__ == '__main__':
                 person_tpr.append(temp_matches!=-1)
                 matches.append(temp_matches)
 
+
         reps_done += len(person_tpr)
 
         all_tpr.extend(person_tpr)
         all_matches.extend(matches)
-        print(matches)
-        print ("TPR :", str(sum(person_tpr)/len(person_tpr)),"| Reps done:", reps_done,"| Avg Hamming:",str(sum(hamming_distance)/len(hamming_distance)), flush=True)
-    print ("Subsample size:", str(size_or_threshold), "| TPR :", str(sum(all_tpr)/len(all_tpr)) ,"| Reps done:",reps_done)
-    print("Generate time:",str(sum(gen_time)/len(gen_time)), " Gen variance:",str(variance(gen_time)))
-    print("Rep time:", str(sum(rep_time)/len(rep_time)), "Rep variance:", str(variance(rep_time)))
+        if (x % 10) == 0 and num_attempts > 0:
+            print("Number averaging: "+str(number_to_group)+" TPR :", str(num_successes / num_attempts))
+    # print ("Subsample size:", str(size_or_threshold), "| TPR :", str(sum(all_tpr)/len(all_tpr)) ,"| Reps done:",reps_done)
+    # print("Generate time:",str(sum(gen_time)/len(gen_time)), " Gen variance:",str(variance(gen_time)))
+    # print("Rep time:", str(sum(rep_time)/len(rep_time)), "Rep variance:", str(variance(rep_time)))
+    if num_attempts > 0:
+        print(" Complete TPR :", str(num_successes / num_attempts))
     # print ("Matched Indicies over TPR:", set(all_matches), "With lockers: ", num_lockers)
 
     print("Finished TAR test")

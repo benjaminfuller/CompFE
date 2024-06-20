@@ -126,7 +126,7 @@ print ("Folders: ",len(folder_list))
 num_classes = range(len(folder_list))
 
 print("Reading Confidence")
-confidence, bad_list = read_complex_conf(cwd + "/CompFE/PythonImpl/AuxiliaryFiles/confidence_672_70classes.txt")
+confidence, bad_list = read_complex_conf(cwd + "/PythonImpl/AuxiliaryFiles/confidence_672_70classes.txt")
 
 if selection_method == 'complex':
     print("Generating Subsets Using Complex Alpha Sampling")
