@@ -356,11 +356,12 @@ if __name__ == '__main__':
     size_or_threshold = int(sys.argv[1]) # Subset size
     num_lockers = int(sys.argv[2]) # number of subsets sampled
     filename = sys.argv[3]
-    number_to_group = int(sys.argv[4])
+    feature_vector_folder = sys.argv[4]
+    number_to_group = int(sys.argv[5])
     numbers = re.compile(r'(\d+)')
     cwd = os.getcwd()
     num_cpus = 2*mp.cpu_count()
-    folder_list = sorted(glob.glob(cwd + "/iris_best-entropy/*"),key=numericalSort)
+    folder_list = sorted(glob.glob(cwd + "/"+feature_vector_folder+"/*"),key=numericalSort)
     CLASSES = len(folder_list)
     # print ("Folders: ",len(folder_list))
     num_classes = range(len(folder_list))
@@ -429,6 +430,7 @@ if __name__ == '__main__':
     num_successes = 0
     for x in range(len(templates)):
         templateNum = x
+        print(len(templates[templateNum]))
         if templates[templateNum] is None or len(templates[templateNum]) < 2:
             continue
 
@@ -474,6 +476,7 @@ if __name__ == '__main__':
 
 
         reps_done += len(person_tpr)
+        print("Number of reps done "+str(reps_done))
 
         all_tpr.extend(person_tpr)
         all_matches.extend(matches)
