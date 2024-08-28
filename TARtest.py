@@ -347,7 +347,7 @@ if __name__ == '__main__':
     rep_time=[]
     num_attempts = 0
     num_successes = 0
-    for x in range(len(templates)):
+    for x in range(min(len(templates),200):
         templateNum = x
         print(len(templates[templateNum]))
         if templates[templateNum] is None or len(templates[templateNum]) < 2:
