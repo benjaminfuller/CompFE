@@ -44,23 +44,9 @@ def sample_uniform(size, biometric_len, number_samples=1, confidence=None):
     randGen = random.SystemRandom()
     return np.array([randGen.sample(pick_range, size) for x in range(number_samples)])
 
-def sample_uniform_entropy_threshold(size, biometric_len, number_samples, confidence, threshold):
-    if confidence is None:
-        print("No confidence file given, cannot estimate entropy. Defaulting to set size subset uniform sampling.")
-        return sample_uniform(size, biometric_len, number_samples, confidence=None)
-    
-    sample_array=[]
-    for _ in range(number_samples):
-        sampled_indicies = []
-        current_confidence_estimation_total = 0
-        while(current_confidence_estimation_total < threshold):
-            selected_indices = random.choices(range(len(confidence)),k=int(np.ceil(threshold - current_confidence_estimation_total)))
-            for index in selected_indices:
-                if index not in sampled_indicies:
-                    current_confidence_estimation_total = current_confidence_estimation_total + binary_entropy(2 * confidence[index][1] * (1 - confidence[index][1]))
-                    sampled_indicies.append(index)
-        sample_array.append(sampled_indicies)
-    return sample_array
+
+def min_entropy(val):
+    return min(- math.log2(val), - math.log2(1-val))
 
 def binary_entropy(val):
     return -(val) * math.log2(val) - (1 - val) * (math.log2(1-val))
@@ -116,41 +102,6 @@ def sample_alpha(size, biometric_len, number_samples, confidence, alpha_param):
         sample_array.append(dedup_indices)
     return np.array(sample_array)
 
-def sample_alpha_entropy_threshold(size, biometric_len, number_samples, confidence, alpha_param, threshold):
-    if confidence is None:
-        print("No confidence file given, cannot estimate entropy. Defaulting to set size subset uniform sampling.")
-        return sample_uniform(size, biometric_len, number_samples, confidence=None)
-    
-    for pair in confidence:
-        print(pair)
-    new_confidence = [pair[0] ** alpha_param for pair in confidence]
-    total_confidence = sum(new_confidence)
-    new_confidence = [item / total_confidence for item in new_confidence]
-    sample_array = []
-    for _ in range(number_samples):
-        sampled_indicies = []
-        current_confidence_estimation_total = 0
-        while(current_confidence_estimation_total < threshold):
-            # print("Current Confidence Sum:", current_confidence_estimation_total)
-            # print("Current Gap:",int(np.ceil(threshold - current_confidence_estimation_total)))
-            selected_indices = random.choices(range(len(new_confidence)), weights=new_confidence,k=int(np.ceil(threshold - current_confidence_estimation_total)))
-            # print("Size of sampled set:", len(selected_indices))
-            for index in selected_indices:
-                if index not in sampled_indicies:
-                    # print("----")
-                    # print("index:", index)
-                    # print("Unlike mean:",confidence[index][1])
-                    # print("Two samples difference:",binary_entropy(2 * confidence[index][1] * (1 - confidence[index][1])))
-                    # print("binary entropy of unlike mean:",binary_entropy(confidence[index][1]))
-                    # print("binary entropy of binary entropy of unlike mean:",binary_entropy(binary_entropy(confidence[index][1])))
-                    # print("----")
-                    current_confidence_estimation_total = current_confidence_estimation_total + binary_entropy(2 * confidence[index][1] * (1 - confidence[index][1]))
-                    # current_confidence_estimation_total = current_confidence_estimation_total + binary_entropy(confidence[index][1])
-                    # sampled_indicies.append([index,binary_entropy(confidence[index][1])])
-                    sampled_indicies.append([index,binary_entropy(2 * confidence[index][1] * (1 - confidence[index][1]))])
-        sample_array.append(sampled_indicies)
-    return sample_array
-
 
 # Current Working Project
 def sample_alpha_with_entropy(size, biometric_len, number_samples, confidence, alpha_param):
@@ -160,7 +111,7 @@ def sample_alpha_with_entropy(size, biometric_len, number_samples, confidence, a
         return sample_uniform(size, biometric_len, number_samples, confidence)
 
     sample_array = []
-    new_confidence = [pair[0] ** (alpha_param / binary_entropy(pair[1])) for pair in confidence]
+    new_confidence = [pair[0] ** (alpha_param / min_entropy(pair[1])) for pair in confidence]
 
     for set_selection_iter in range(number_samples):
         sample_indices = random.choices(range(len(new_confidence)), weights=new_confidence, k=size)
@@ -177,38 +128,6 @@ def sample_alpha_with_entropy(size, biometric_len, number_samples, confidence, a
         sample_array.append(dedup_indices)
     return np.array(sample_array)
 
-def sample_alpha_with_entropy_entropy_threshold(size, biometric_len, number_samples, confidence, alpha_param, threshold):
-    if confidence is None:
-        print("No confidence file given, cannot estimate entropy. Defaulting to set size subset uniform sampling.")
-        return sample_uniform(size, biometric_len, number_samples, confidence=None)
-    
-    new_confidence = [pair[0] ** (alpha_param/(binary_entropy(pair[1]))) for pair in confidence]
-    total_confidence = sum(new_confidence)
-    new_confidence = [item / total_confidence for item in new_confidence]
-    sample_array = []
-    for _ in range(number_samples):
-        sampled_indicies = []
-        current_confidence_estimation_total = 0
-        while(current_confidence_estimation_total < threshold):
-            # print("Current Confidence Sum:", current_confidence_estimation_total)
-            # print("Current Gap:",int(np.ceil(threshold - current_confidence_estimation_total)))
-            selected_indices = random.choices(range(len(new_confidence)), weights=new_confidence,k=int(np.ceil(threshold - current_confidence_estimation_total)))
-            # print("Size of sampled set:", len(selected_indices))
-            for index in selected_indices:
-                if index not in sampled_indicies:
-                    # print("----")
-                    # print("index:", index)
-                    # print("Unlike mean:",confidence[index][1])
-                    # print("Two samples difference:",binary_entropy(2 * confidence[index][1] * (1 - confidence[index][1])))
-                    # print("binary entropy of unlike mean:",binary_entropy(confidence[index][1]))
-                    # print("binary entropy of binary entropy of unlike mean:",binary_entropy(binary_entropy(confidence[index][1])))
-                    # print("----")
-                    current_confidence_estimation_total = current_confidence_estimation_total + binary_entropy(2 * confidence[index][1] * (1 - confidence[index][1]))
-                    # current_confidence_estimation_total = current_confidence_estimation_total + binary_entropy(confidence[index][1])
-                    # sampled_indicies.append([index,binary_entropy(confidence[index][1])])
-                    sampled_indicies.append([index,binary_entropy(2 * confidence[index][1] * (1 - confidence[index][1]))])
-        sample_array.append(sampled_indicies)
-    return sample_array
 
 def rep_helperr2(template, positions, gen_template,index,num_jobs, sum):
     i = 0
@@ -324,7 +243,7 @@ def entropy(templates, ground_truth, selection_method,size_or_threshold,num_jobs
         degrees_freedom = (u*(1-u))/np.var(red)
         print("Adding to list")
 
-        entropy = degrees_freedom * binary_entropy(u)
+        entropy = degrees_freedom * min_entropy(u)
 
         entropy_list.append(2**(-1 * entropy))
         print(u,np.var(red))
@@ -363,7 +282,7 @@ if __name__ == '__main__':
     num_cpus = 2*mp.cpu_count()
     folder_list = sorted(glob.glob(cwd + "/"+feature_vector_folder+"/*"),key=numericalSort)
     CLASSES = len(folder_list)
-    # print ("Folders: ",len(folder_list))
+    print ("Folders: ",len(folder_list))
     num_classes = range(len(folder_list))
 
     print ("Reading templates")

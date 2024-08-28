@@ -27,8 +27,11 @@ def sample_uniform(size, biometric_len, number_samples=1, confidence=None):
     randGen = random.SystemRandom()
     return np.array([randGen.sample(pick_range, size) for x in range(number_samples)])
 
+def min_entropy(val):
+    return min(- math.log2(val), - math.log2(1-val))
+
 def binary_entropy(val):
-    return -(val) * math.log2(val) - (1 - val) * (math.log2(1-val))
+    return -(val) * math.log2(val) - (1 - val) * (math.log2(1 - val))
 
 def read_complex_conf(filepath):
         bad_list = []
@@ -88,7 +91,7 @@ def sample_alpha_with_entropy(size, biometric_len, number_samples, confidence, a
         return sample_uniform(size, biometric_len, number_samples, confidence)
 
     sample_array = []
-    new_confidence = [pair[0] ** (alpha_param / binary_entropy(pair[1])) for pair in confidence]
+    new_confidence = [pair[0] ** (alpha_param / min_entropy(pair[1])) for pair in confidence]
 
     for set_selection_iter in range(number_samples):
         sample_indices = random.choices(range(len(new_confidence)), weights=new_confidence, k=size)
