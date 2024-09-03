@@ -91,7 +91,7 @@ def sample_alpha_with_entropy(size, biometric_len, number_samples, confidence, a
         return sample_uniform(size, biometric_len, number_samples, confidence)
 
     sample_array = []
-    new_confidence = [pair[0] ** (alpha_param / min_entropy(pair[1])) for pair in confidence]
+    new_confidence = [(pair[0]/max(pair[1], 1-pair[1])) ** (alpha_param ) for pair in confidence]
 
     for set_selection_iter in range(number_samples):
         sample_indices = random.choices(range(len(new_confidence)), weights=new_confidence, k=size)
