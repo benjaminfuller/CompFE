@@ -1,12 +1,14 @@
 import numpy as np
 import matplotlib.mlab as mlab
 import matplotlib.pyplot as plt
+import sys
 import csv
 
 p_same=[]
 p_diff=[]
 p_gap=[]
-with open('../PythonImpl/confidence_672_70classes', newline='') as csvfile:
+filename = sys.argv[1]
+with open(filename, newline='') as csvfile:
     confidence_info = csv.reader(csvfile, delimiter=' ', quotechar='|')
     
     for row in confidence_info:

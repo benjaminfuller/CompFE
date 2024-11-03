@@ -8,8 +8,8 @@ ent=[]
 alpha=[]
 subset_dict={}
 alpha_dict={}
-ent_levels=[30, 35,40,45,50,55,60,65,70,75]
-tar_levels=[.1,.2,.3,.4,.5,.6,.7,.8,.9]
+ent_levels=[20, 25, 30, 35, 40, 42, 44, 46, 48, 50, 52, 54, 56]
+tar_levels=[.05, .1,.15, .2,.3,.4,.5,.6,.7,.8,.9]
 ent_best_params_dict={}
 tar_best_params_dict={}
 
@@ -19,7 +19,7 @@ for tar in tar_levels:
     tar_best_params_dict[tar] = (0,0,0)
    
 
-with open('ent_tar_new.txt', newline='') as csvfile:
+with open('ent_tar.txt', newline='') as csvfile:
     tar_rates = csv.reader(csvfile, delimiter='\t', quotechar='|')
     next(tar_rates)
     for row in tar_rates:
@@ -41,7 +41,22 @@ with open('ent_tar_new.txt', newline='') as csvfile:
                     if ent> best_ent:
                         tar_best_params_dict[tarate] = (ent, alpha, subset_size)
                     
-                               
-print(ent_best_params_dict)
+for ent_level in ent_best_params_dict:
+    tar, alpha, subset = ent_best_params_dict[ent_level]
+    if tar==0:
+        continue
+    if alpha>0:
+        print("$\\ge $", ent_level,"&",subset,"&",alpha,"&",round(tar,2))
+    else:
+        print("$\\ge $", ent_level,"&",subset,"&",round(tar,2))
 
-print(tar_best_params_dict)
+print()
+for tar_level in tar_best_params_dict:
+    ent, alpha, subset= tar_best_params_dict[tar_level]
+    if ent==0:
+        continue
+    if alpha>0:
+        print("$\\ge $", tar_level,"&",subset,"&",alpha,"&",round(ent,0))
+    else:
+        print("$\\ge $", tar_level,"&",subset,"&",round(ent,0))
+
