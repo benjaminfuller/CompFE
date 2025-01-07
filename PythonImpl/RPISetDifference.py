@@ -13,11 +13,11 @@ def RPIGen(w, hash=sha512):
     c = []
     length = hash().digest_size
     for wi in w:
-        xi = generate_random(length/2)
+        xi = generate_random(int(length / 2))
         seed = generate_random(16)
-        zeros = bytearray([0 for x in range(length/2)])
-        lock = bytearray(hmac.new(seed, wi, hash).digest())
-        ci = xor(lock, (zeros+xi))
+        zeros = bytearray([0 for x in range(int(length / 2))])
+        lock = bytearray(hmac.new(seed, wi.encode(), hash).digest())
+        ci = xor(lock, (zeros + xi))
         c.append((ci, seed))
         omega.append(xi)
     return c, omega
@@ -30,17 +30,17 @@ def RPIRep(w, c, hash=sha512):
     for i in range(s):
         for j in range(n):
             cj, seed = c[j]
-            h = bytearray(hmac.new(seed, w[i], hash).digest())
+            h = bytearray(hmac.new(seed, w[i].encode(), hash).digest())
             xi = xor(cj, h)
             res = check_result(xi)
-            if(not res and j == (n-1)):
-                omega.append(generate_random(length/2))
-            elif(not res and j != (n-1)):
+            if not res and j == (n - 1):
+                omega.append(generate_random(length / 2))
+            elif not res and j != (n - 1):
                 continue
             else:
                 c.pop(j)
                 n -= 1
-                omega.append(xi[len(xi)/2:])
+                omega.append(xi[int(len(xi) / 2) :])
                 break
     return omega
 
@@ -54,13 +54,13 @@ def generate_random(length):
 
 
 def check_result(res):
-    return all(v == 0 for v in res[:len(res)/2])
+    return all(v == 0 for v in res[: int(len(res) / 2)])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     w = ["1", "0", "1", "0", "1", "0"]
     r = ["1", "0", "1", "0", "1", "0"]
-    c, omega = gen(w)
-    omega2 = rep(r, c)
+    c, omega = RPIGen(w)
+    omega2 = RPIRep(r, c)
     print(omega)
     print(omega2)
