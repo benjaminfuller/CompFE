@@ -2,14 +2,15 @@ import numpy as np
 import matplotlib.mlab as mlab
 import matplotlib.pyplot as plt
 import csv
+import sys
 
 tar=[]
 ent=[]
 alpha=[]
 subset_dict={}
 alpha_dict={}
-ent_levels=[20, 25, 30, 35, 40, 42, 44, 46, 48, 50, 52, 54, 56]
-tar_levels=[.05, .1,.15, .2,.3,.4,.5,.6,.7,.8,.9]
+ent_levels=[20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120]
+tar_levels=[.1, .2, .3, .4, .5, .6, .7,.8,.9]
 ent_best_params_dict={}
 tar_best_params_dict={}
 
@@ -18,17 +19,17 @@ for ent in ent_levels:
 for tar in tar_levels:
     tar_best_params_dict[tar] = (0,0,0)
    
-
-with open('ent_tar.txt', newline='') as csvfile:
+file_name = sys.argv[1]
+with open(file_name, newline='') as csvfile:
     tar_rates = csv.reader(csvfile, delimiter='\t', quotechar='|')
-    next(tar_rates)
+#    next(tar_rates)
     for row in tar_rates:
         if len(row)>3:
             subset_size = int(row[0])
             alpha = float(row[1])
             ent = float(row[2])
             tar = float(row[3])
-
+            
             for entropy in ent_levels:
                 if ent>= entropy:
                     best_tar, best_alpha, best_subset_size = ent_best_params_dict[entropy]
@@ -48,7 +49,7 @@ for ent_level in ent_best_params_dict:
     if alpha>0:
         print("$\\ge $", ent_level,"&",subset,"&",alpha,"&",round(tar,2))
     else:
-        print("$\\ge $", ent_level,"&",subset,"&",round(tar,2))
+        print("$\\ge $", ent_level,"&",subset,"&",0, "&",round(tar,2))
 
 print()
 for tar_level in tar_best_params_dict:
@@ -58,5 +59,5 @@ for tar_level in tar_best_params_dict:
     if alpha>0:
         print("$\\ge $", tar_level,"&",subset,"&",alpha,"&",round(ent,0))
     else:
-        print("$\\ge $", tar_level,"&",subset,"&",round(ent,0))
+        print("$\\ge $", tar_level,"&",subset,"&",0, "&",round(ent,0))
 

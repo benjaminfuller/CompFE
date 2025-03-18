@@ -59,7 +59,7 @@ plt.scatter(ent_ang_u, tar_ang_u, alpha=0.8, label="Angular Feature Extractor, U
 #    else:
 #        plt.scatter(ent, tar, alpha=0.5, label="New")
             
-plt.xlabel("Minimum of Entropy of across 1000 subsets")
+plt.xlabel("Minimum of Entropy of across 10 subsets")
 plt.legend()
 plt.ylabel("True Accept Rate")
 plt.title("Entropy and TAR for different mechanisms")
