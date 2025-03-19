@@ -53,8 +53,8 @@ with open(file_name, newline='') as csvfile:
 
 subset_size=[40,45,50,55,60,65,70,75,80,85,90,95,100,105,110,115,120,125,130,135,140]
 for ss in subset_size:
-    ent_u, tar_u = tar_improvement_dict[(ss,False)]
-    ent_z, tar_z= tar_improvement_dict[(ss,True)]
+    ent_u, tar_u = tar_improvement_dict[(ss,True)]
+    ent_z, tar_z= tar_improvement_dict[(ss,False)]
     print(ss, tar_z/tar_u, ent_z-ent_u)
 
 for ent_level in ent_best_params_dict:
