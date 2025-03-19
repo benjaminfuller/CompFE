@@ -18,6 +18,8 @@ for ent in ent_levels:
     ent_best_params_dict[ent] = (0,0,0)
 for tar in tar_levels:
     tar_best_params_dict[tar] = (0,0,0)
+
+tar_improvement_dict={}
    
 file_name = sys.argv[1]
 with open(file_name, newline='') as csvfile:
@@ -29,6 +31,13 @@ with open(file_name, newline='') as csvfile:
             alpha = float(row[1])
             ent = float(row[2])
             tar = float(row[3])
+            try:
+                (ent_temp, tar_temp) =  tar_improvement_dict[(subset_size,alpha==0)]
+                if tar> tar_temp:
+                    tar_improvement_dict[(subset_size,alpha==0)] = (ent, tar)
+            except:
+                tar_improvement_dict[(subset_size,alpha==0)] = (ent, tar)
+
             
             for entropy in ent_levels:
                 if ent>= entropy:
@@ -41,7 +50,13 @@ with open(file_name, newline='') as csvfile:
                     best_ent, best_alpha, best_subset_size = tar_best_params_dict[tarate]
                     if ent> best_ent:
                         tar_best_params_dict[tarate] = (ent, alpha, subset_size)
-                    
+
+subset_size=[40,45,50,55,60,65,70,75,80,85,90,95,100,105,110,115,120,125,130,135,140]
+for ss in subset_size:
+    ent_u, tar_u = tar_improvement_dict[(ss,False)]
+    ent_z, tar_z= tar_improvement_dict[(ss,True)]
+    print(ss, tar_z/tar_u, ent_z-ent_u)
+
 for ent_level in ent_best_params_dict:
     tar, alpha, subset = ent_best_params_dict[ent_level]
     if tar==0:
